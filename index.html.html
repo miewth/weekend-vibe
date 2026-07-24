@@ -1,0 +1,1028 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Weekend Vibes</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@300;400;500;600;700;900&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Noto Sans Thai', sans-serif; background-color: #f3f4f6; }
+    .mobile-container { 
+      max-width: 480px; margin: 0 auto; background: white; 
+      min-height: 100vh; position: relative; box-shadow: 0 0 20px rgba(0,0,0,0.05); 
+      overflow-x: hidden;
+    }
+    .gradient-text { background: linear-gradient(45deg, #a855f7, #3b82f6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .hide-scrollbar::-webkit-scrollbar { display: none; }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+<script type="text/babel">
+    const { useState, useEffect, useRef } = React;
+
+    // --- เชื่อมต่อ Supabase (ขั้นที่ 4) ---
+    const { createClient } = supabase;
+    const supabaseUrl = 'https://yifaesmogvggvzsfkcwr.supabase.co'; // ดึง URL มาจากรูปโปรเจกต์ของคุณ Miew ให้แล้วครับ
+    const supabaseKey = 'sb_publishable_3AJO1MhySIrtl1ZvBQTcTw_F3PjUpRI'; // **อย่าลืมเอา Key จากหน้า API มาวางแทนตรงนี้นะครับ**
+    const supabaseApp = createClient(supabaseUrl, supabaseKey);
+
+    // --- Mock Data ---
+    const MOCK_TITLES = ['ตัวตึงหมูกระทะ 🥓', 'แม่งานท่านหนึ่ง 👑', 'ผู้ประสบภัย 🏕️', 'สายปาร์ตี้ 🍻', 'นักล่าคาเฟ่ ☕', 'ตัวแบกทริป 🎒', 'สภาพพพ 🫠', 'เน้นเข้าร่วม ไม่เน้นช่วย 🏃‍♂️', 'ตื่นสายแต่มานะ 🛌', 'ตัวมารดา 💅', 'ดาวติ๊กต็อก 📱', 'สายคอนเทนต์ 📸', 'เงินเดือนออกค่อยคุย 💸', 'กินหรูอยู่ยาจก 🍜', 'เดี๋ยวตามไป 🚕', 'สายแบกตับ 🍻', 'นักรีวิวป้ายยา 🛍️', 'ชีพจรลงเท้า 🗺️', 'สู้ชีวิตแต่ชีวิตสู้กลับ 🥊', 'ฟีลปล่อยจอย 🍃', 'วันๆหาแต่ทำ 🤸‍♀️', 'เพื่อนลากมา 🧟‍♂️', 'ใจสู้แต่ร่างพัง 🦴', 'ของแทร่ 💯', 'สายกินแหลก 🍽️', 'ตัวรันวงการ 🏃‍♀️', 'ตัวเปิดประจำตี้ 🍾', 'คนชงประจำโต๊ะ 🧊', 'ตัวนอนน้อย 🐼', 'จองคิวหมอนวด 💆‍♀️', 'สายมูเตลู 🔮', 'ทรงซ้อออฟฟิศ 💄', 'ตัวบัคของกลุ่ม 🐛'];
+    const MOCK_HOUSES = ['บ้านสีแดง', 'ชมรมคนชอบนอน', 'แก๊งหมูกระทะ'];
+    
+    const MOCK_USERS = [
+      { id: 99, username: 'boy', pin: '12345', name: 'พี่บอย', phone: '0812345678', emoji: '😎', house: 'แก๊งหมูกระทะ', title: 'ตัวตึงหมูกระทะ 🥓' },
+      { id: 88, username: 'joy', pin: '11111', name: 'น้องจอย', phone: '0898765432', emoji: '👧🏻', house: 'ชมรมคนชอบนอน', title: 'แม่งานท่านหนึ่ง 👑' },
+      { id: 77, username: 'somchai', pin: '54321', name: 'สมชาย', phone: '0855555555', emoji: '👦🏽', house: 'บ้านสีแดง', title: 'ผู้ประสบภัย 🏕️' },
+      { id: 66, username: 'earth', pin: '12345', name: 'พี่เอิร์ท', phone: '0899999999', emoji: '🚙', house: 'แก๊งหมูกระทะ', title: 'ตัวแบกทริป 🎒' }
+    ];
+
+    const MOCK_EVENTS = [
+      {
+        id: 1,
+        icon: '🏕️',
+        title: 'แคมป์ปิ้งเขาใหญ่',
+        location: 'เขาใหญ่',
+        map_url: 'https://maps.app.goo.gl/example',
+        ref_links: ['https://tiktok.com/example'],
+        options: [
+          { id: 101, date: '2026-12-10', time: '08:00', votes: [99] },
+          { id: 102, date: '2026-12-17', time: '08:00', votes: [] }
+        ],
+        status: 'exploring',
+        created_by: MOCK_USERS[0],
+        reactions: { '🔥': 2, '🍻': 0, '👀': 1, '🚀': 0 },
+        cars: []
+      },
+      {
+        id: 2, 
+        icon: '🌊',
+        title: 'ทริปหนีงานไปบางแสน',
+        location: 'บางแสน ชลบุรี',
+        map_url: '',
+        ref_links: [],
+        options: [{ id: 201, date: '2026-08-10', time: '10:00', votes: [99, 88, 77, 66] }],
+        final_option: 201,
+        status: 'approved',
+        created_by: MOCK_USERS[1],
+        participants: [MOCK_USERS[1], MOCK_USERS[0], MOCK_USERS[2], MOCK_USERS[3]],
+        reactions: { '🔥': 5, '🍻': 8, '👀': 2, '🚀': 1 },
+        photos: [],
+        cars: [{ id: 'c1', driver: MOCK_USERS[3], max_seats: 3, passengers: [MOCK_USERS[0]] }]
+      }
+    ];
+
+    const MOCK_WISHLISTS = [
+      { id: 1, text: 'อยากไปกินชาบูหมาล่า แถวบรรทัดทอง', link: 'https://tiktok.com/shabu', votes: 12 },
+      { id: 2, text: 'ไปตีแบดหลังเลิกงานกันป่าว', link: '', votes: 5 }
+    ];
+
+   function App() {
+      const [currentUser, setCurrentUser] = useState(null);
+      
+      // 1. เปลี่ยนค่าเริ่มต้นให้เป็น Array ว่าง (ลบ Mock ทิ้งเพื่อให้ดึงจากฐานข้อมูลจริง)
+      const [users, setUsers] = useState([]);
+      const [houses, setHouses] = useState(MOCK_HOUSES); // บ้านพื้นฐานยังใช้ Mock ได้ครับ
+      const [events, setEvents] = useState([]);
+      const [wishlists, setWishlists] = useState([]);
+      
+      const [view, setView] = useState('landing'); 
+      const [feedTab, setFeedTab] = useState('exploring'); 
+      
+      const [editingEvent, setEditingEvent] = useState(null);
+      const [shareEvent, setShareEvent] = useState(null); 
+
+      // 2. เพิ่ม useEffect เพื่อสั่งดึงข้อมูลจาก Supabase ทันทีที่เปิดหน้าเว็บ
+      useEffect(() => {
+        async function fetchData() {
+          // ดึงรายชื่อ Users
+          const { data: usersData } = await supabaseApp
+             .from('users')
+             .select('*');
+          if (usersData) setUsers(usersData);
+
+          // ดึงกิจกรรม (ใช้เทคนิค JOIN เอาข้อมูลผู้สร้างจากตาราง users มาด้วย)
+          const { data: eventsData } = await supabaseApp
+             .from('events')
+             .select('*, created_by:users(*)')
+             .order('id', { ascending: false }); // เรียงอันใหม่ล่าสุดขึ้นก่อน
+          if (eventsData) setEvents(eventsData);
+
+          // ดึงไอเดียที่หย่อนไว้
+          const { data: wishlistsData } = await supabaseApp
+             .from('wishlists')
+             .select('*')
+             .order('votes', { ascending: false }); // เรียงตามโหวต
+          if (wishlistsData) setWishlists(wishlistsData);
+        }
+
+        fetchData();
+      }, []); // วงเล็บ [] หมายถึงให้ดึงข้อมูลแค่ตอนเปิดเว็บครั้งแรกเท่านั้น
+
+      const isPastEvent = (evt) => {
+        if(evt.status === 'cancelled') return true;
+        const today = new Date();
+        today.setHours(0,0,0,0); 
+
+        if (evt.status === 'approved') {
+           const finalOpt = evt.options.find(o => o.id === evt.final_option);
+           if (!finalOpt) return false;
+           const evtDate = new Date(finalOpt.date);
+           evtDate.setHours(0,0,0,0);
+           return evtDate < today; 
+        }
+        
+        if (evt.status === 'exploring') {
+           const hasFutureDate = evt.options.some(opt => {
+              const optDate = new Date(opt.date);
+              optDate.setHours(0,0,0,0);
+              return optDate >= today;
+           });
+           return !hasFutureDate;
+        }
+        return false;
+      };
+
+      const activeEvents = events.filter(e => !isPastEvent(e) && e.status === 'exploring');
+      const approvedEvents = events.filter(e => !isPastEvent(e) && e.status === 'approved');
+      const historyEvents = events.filter(e => isPastEvent(e));
+
+      const handleSaveProfile = (profileData) => {
+        let finalData = { ...profileData };
+        if (!currentUser) {
+          finalData.title = MOCK_TITLES[Math.floor(Math.random() * MOCK_TITLES.length)];
+          setUsers(prev => [...prev, finalData]);
+        } else {
+          setUsers(prev => prev.map(u => u.id === profileData.id ? {...u, ...profileData} : u));
+        }
+        if (!houses.includes(profileData.house)) setHouses(prev => [...prev, profileData.house]);
+        setCurrentUser({...currentUser, ...finalData});
+        setView('feed');
+      };
+
+      const handleLogout = () => { setCurrentUser(null); setView('landing'); };
+
+      if (view === 'landing') {
+        return (
+          <div className="mobile-container flex flex-col items-center justify-center p-6 bg-gradient-to-br from-[#f5f3ff] to-[#ecfdf5]">
+            <div className="bg-white px-4 py-1 rounded-full text-xs font-semibold text-gray-500 mb-6 shadow-sm">✨ for office besties</div>
+            <h1 className="text-5xl font-black text-gray-900 leading-none">Weekend</h1>
+            <h1 className="text-5xl font-black gradient-text leading-tight mb-4">Vibes.</h1>
+            <p className="text-center text-gray-600 font-medium mb-10">หาทำทริปวีคเอนด์กับแก๊งออฟฟิศ<br/>ปาโหวต เคาะวัน แล้วไปลุยดิคร้าบ ✌️ 🏕️</p>
+            <div className="text-9xl mb-12 animate-bounce">🎉</div>
+            <button onClick={() => setView('login')} className="w-full bg-[#a855f7] text-white rounded-2xl py-4 font-bold text-lg mb-3 shadow-lg hover:opacity-90 transition transform hover:scale-105">
+              เข้าสู่ระบบ (Login)
+            </button>
+            <button onClick={() => setView('register')} className="w-full bg-white text-purple-600 border-2 border-purple-100 rounded-2xl py-4 font-bold text-lg mb-6 shadow-sm hover:bg-gray-50 transition transform hover:scale-105">
+              สร้างบัญชีใหม่ ✨
+            </button>
+          </div>
+        );
+      }
+
+      if (view === 'login') return <LoginForm users={users} onLogin={(user) => { setCurrentUser(user); setView('feed'); }} onBack={() => setView('landing')} />;
+      if (view === 'register' || view === 'profile') return <ProfileSetup currentUser={currentUser} users={users} existingHouses={houses} onSave={handleSaveProfile} onCancel={currentUser ? () => setView('feed') : () => setView('landing')} onLogout={currentUser ? handleLogout : null} />;
+
+      return (
+        <div className="mobile-container bg-gray-50 pb-24 min-h-screen">
+          <div className="bg-white p-6 rounded-b-3xl shadow-sm flex justify-between items-center z-10 relative">
+            <div>
+              <p className="text-sm text-gray-500 font-medium flex items-center gap-2">สวัสดีจ้า 👋</p>
+              <h2 className="text-2xl font-bold flex items-center gap-2">
+                {currentUser?.name} <span className="text-3xl">{currentUser?.emoji}</span>
+              </h2>
+              <div className="flex gap-2 mt-1 flex-wrap">
+                <span className="text-xs font-bold text-purple-600 bg-purple-100 px-2 py-1 rounded-lg">🏠 {currentUser?.house}</span>
+                <span className="text-xs font-bold text-orange-600 bg-orange-100 px-2 py-1 rounded-lg">{currentUser?.title}</span>
+              </div>
+            </div>
+            <div className="flex gap-2">
+              <button onClick={() => setView('house_summary')} className="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center text-orange-600 hover:bg-orange-200 shadow-sm text-lg">🏠</button>
+              <button onClick={() => setView('history')} className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center text-gray-600 hover:bg-gray-200 shadow-sm relative">
+                🕒
+                {historyEvents.length > 0 && <span className="absolute top-0 right-0 w-3 h-3 bg-red-500 rounded-full border-2 border-white"></span>}
+              </button>
+              <button onClick={() => setView('profile')} className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center text-purple-600 hover:bg-purple-200 shadow-sm">⚙️</button>
+            </div>
+          </div>
+
+          {view === 'feed' && (
+            <div className="p-4">
+              <div className="flex bg-white rounded-2xl p-1 shadow-sm mb-6 overflow-x-auto hide-scrollbar">
+                <button onClick={() => setFeedTab('exploring')} className={`flex-1 py-3 px-2 whitespace-nowrap rounded-xl text-sm font-bold transition-all ${feedTab === 'exploring' ? 'bg-purple-50 text-purple-600 shadow-sm' : 'text-gray-400'}`}>
+                  🔥 กำลังโหวต
+                </button>
+                <button onClick={() => setFeedTab('approved')} className={`flex-1 py-3 px-2 whitespace-nowrap rounded-xl text-sm font-bold transition-all ${feedTab === 'approved' ? 'bg-green-50 text-green-600 shadow-sm' : 'text-gray-400'}`}>
+                  ✅ เคาะแล้ว
+                </button>
+                <button onClick={() => setFeedTab('wishlist')} className={`flex-1 py-3 px-2 whitespace-nowrap rounded-xl text-sm font-bold transition-all ${feedTab === 'wishlist' ? 'bg-pink-50 text-pink-600 shadow-sm' : 'text-gray-400'}`}>
+                  💡 หย่อนไอเดีย
+                </button>
+              </div>
+
+              {feedTab === 'exploring' && (
+                <div className="space-y-4">
+                  {activeEvents.length === 0 ? <EmptyState /> : activeEvents.map(evt => (
+                    <EventCard key={evt.id} event={evt} currentUser={currentUser} setEvents={setEvents} onEdit={() => { setEditingEvent(evt); setView('edit'); }} onShare={() => setShareEvent(evt)} />
+                  ))}
+                </div>
+              )}
+
+              {feedTab === 'approved' && (
+                <div className="space-y-4">
+                  {approvedEvents.length === 0 ? <EmptyState /> : approvedEvents.map(evt => (
+                    <ApprovedCard key={evt.id} event={evt} currentUser={currentUser} setEvents={setEvents} onShare={() => setShareEvent(evt)} />
+                  ))}
+                </div>
+              )}
+
+              {feedTab === 'wishlist' && <WishlistTab wishlists={wishlists} setWishlists={setWishlists} />}
+
+              {feedTab !== 'wishlist' && (
+                <div className="fixed bottom-6 left-0 right-0 flex justify-center w-full max-w-[480px] mx-auto px-4 z-40">
+                  <button onClick={() => { setEditingEvent(null); setView('create'); }} className="w-full bg-[#a855f7] text-white py-4 rounded-2xl font-bold text-lg shadow-xl shadow-purple-200 hover:bg-purple-600 transition">
+                    + สร้างกิจกรรมใหม่
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+
+          {(view === 'create' || view === 'edit') && (
+            <CreateEditForm currentUser={currentUser} onClose={() => setView('feed')} setEvents={setEvents} initialData={editingEvent} />
+          )}
+
+          {view === 'history' && (
+            <div className="p-4">
+              <div className="flex items-center gap-3 mb-6">
+                <button onClick={() => setView('feed')} className="w-10 h-10 bg-white rounded-full shadow-sm flex items-center justify-center font-bold">←</button>
+                <h2 className="text-xl font-bold text-gray-800">ประวัติ & Photo Dump 📸</h2>
+              </div>
+              <div className="space-y-4">
+                {historyEvents.length === 0 ? <p className="text-center text-gray-500 mt-10">ยังไม่มีประวัติ</p> : historyEvents.map(evt => (
+                  <HistoryCard key={evt.id} event={evt} setEvents={setEvents} />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {view === 'house_summary' && <HouseSummary users={users} houses={houses} onClose={() => setView('feed')} />}
+          
+          {shareEvent && <ShareTicketModal event={shareEvent} onClose={() => setShareEvent(null)} />}
+        </div>
+      );
+    }
+
+    // --- Tab ไอเดีย (Wishlist) ---
+    function WishlistTab({ wishlists, setWishlists }) {
+      const [text, setText] = useState('');
+      const [link, setLink] = useState('');
+
+      const handleSubmit = async (e) => {
+        e.preventDefault();
+        
+        if (text) {
+          const newIdea = { text: text, link: link, votes: 0 };
+          
+          // ส่งข้อมูลไปเซฟที่ Supabase
+          const { data, error } = await supabaseApp
+             .from('wishlists')
+             .insert([newIdea])
+             .select();
+          
+          if (error) {
+             console.error(error);
+             alert('บันทึกไอเดียไม่สำเร็จ!');
+          } else {
+             // โชว์ข้อมูลใหม่บนหน้าจอ และเคลียร์ช่องพิมพ์
+             setWishlists(prev => [data[0], ...prev]);
+             setText(''); 
+             setLink(''); 
+          }
+        }
+      };
+
+      return (
+        <div className="space-y-6">
+          <form onSubmit={handleSubmit} className="bg-pink-50 p-4 rounded-3xl border border-pink-100 shadow-sm">
+            <h3 className="font-bold text-pink-600 mb-2">💡 กล่องหย่อนไอเดีย (ไม่ระบุชื่อ)</h3>
+            <p className="text-xs text-pink-400 mb-3">อยากไปไหน พิมพ์ทิ้งไว้เผื่อมีคนจัดให้!</p>
+            <input type="text" placeholder="พิมพ์ไอเดียที่นี่..." value={text} onChange={e => setText(e.target.value)} required className="w-full bg-white p-3 rounded-xl mb-2 text-sm outline-none focus:ring-2 ring-pink-300" />
+            <input type="url" placeholder="แปะลิงก์ TikTok/IG (ถ้ามี)" value={link} onChange={e => setLink(e.target.value)} className="w-full bg-white p-3 rounded-xl mb-3 text-sm outline-none focus:ring-2 ring-pink-300" />
+            <button type="submit" className="w-full bg-pink-500 text-white font-bold py-3 rounded-xl shadow-md hover:bg-pink-600">หย่อนลงกล่อง 📥</button>
+          </form>
+          <div className="space-y-3 pb-10">
+            {wishlists.map(w => (
+              <div key={w.id} className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex items-center gap-3">
+                <div className="flex-1">
+                  <p className="font-medium text-gray-800">{w.text}</p>
+                  {w.link && <a href={w.link} target="_blank" className="text-xs text-blue-500 hover:underline mt-1 inline-block">🔗 ดูลิงก์อ้างอิง</a>}
+                </div>
+                <button onClick={() => setWishlists(prev => prev.map(item => item.id === w.id ? {...item, votes: item.votes + 1} : item).sort((a,b) => b.votes - a.votes))} className="flex flex-col items-center justify-center bg-gray-50 px-3 py-2 rounded-xl border border-gray-100 hover:bg-pink-50 hover:border-pink-200 transition">
+                  <span className="text-xl">❤️</span><span className="text-xs font-bold text-gray-500">{w.votes}</span>
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      );
+    }
+    
+    // --- Share Modal (FOMO) + Save Image Fix ตัดข้อความ ---
+    function ShareTicketModal({ event, onClose }) {
+      const ticketRef = useRef(null);
+      const [isGenerating, setIsGenerating] = useState(false);
+
+      const renderBarcode = () => {
+         const bars = [];
+         for(let i=0; i<45; i++) {
+            const width = Math.random() > 0.5 ? 'w-1' : 'w-0.5';
+            const height = Math.random() > 0.2 ? 'h-full' : 'h-4/5';
+            bars.push(<div key={i} className={`bg-gray-800 ${width} ${height} rounded-sm`}></div>);
+         }
+         return bars;
+      };
+
+      const handleShareAndDownload = async () => {
+        setIsGenerating(true);
+        const appLink = `https://weekendvibes.app/e/${event.id}`;
+        const shareText = `🚀 ชวนแก๊งไปลุย: ${event.title}\n📍 สถานที่: ${event.location}\n👑 โฮสต์: ${event.created_by.name}\n\n👇 รีบเข้ามากด${event.status === 'approved' ? 'จองรถ/ดูวัน' : 'โหวตวัน'}กันเลยที่นี่:\n${appLink}`;
+        
+        try { await navigator.clipboard.writeText(shareText); } catch (err) {}
+
+        if (ticketRef.current && window.html2canvas) {
+           try {
+              // พักสักนิดให้ UI นิ่งก่อนแคปเจอร์
+              await new Promise(res => setTimeout(res, 200));
+              
+              const canvas = await window.html2canvas(ticketRef.current, { 
+                 backgroundColor: '#ffffff', // บังคับพื้นหลังสีขาวป้องกันโปร่งใสเพี้ยน
+                 scale: 3, 
+                 useCORS: true,
+                 scrollY: -window.scrollY // แก้ปัญหาเลื่อนบนมือถือ
+              });
+              const link = document.createElement('a');
+              link.href = canvas.toDataURL("image/jpeg", 0.9); // ใช้ JPEG เพื่อความเสถียร
+              link.download = `weekend-vibes-ticket-${event.id}.jpg`;
+              link.click();
+              alert('✅ คัดลอกข้อความชวนเพื่อน และเซฟรูปตั๋วลงเครื่องเรียบร้อยแล้ว!\nส่งในกลุ่ม LINE หรือลง IG Story ได้เลยจ้า');
+           } catch (error) { 
+              console.error(error);
+              alert('✅ คัดลอกข้อความชวนเพื่อนเรียบร้อยแล้ว!\n(หากระบบโหลดรูปภาพไม่สำเร็จ กรุณาแคปหน้าจอรูปตั๋วด้วยตนเองนะครับ)'); 
+           }
+        }
+        setIsGenerating(false);
+        onClose();
+      };
+
+      return (
+        <div className="fixed inset-0 bg-black/60 z-[100] flex flex-col items-center justify-center p-6 backdrop-blur-sm">
+          <div className="w-full max-w-sm relative">
+            
+            <button onClick={onClose} className="absolute -top-12 right-0 text-white font-bold text-xl bg-white/20 w-10 h-10 rounded-full hover:bg-white/40 transition">✕</button>
+            
+            {/* 🎟️ ตัวตั๋วที่จะถูกเซฟเป็นรูปภาพ (ตัด Style ที่ทำให้ html2canvas เพี้ยนออก) */}
+            <div ref={ticketRef} className="w-full bg-white rounded-[24px] overflow-hidden flex flex-col relative" style={{ boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.4)', fontFamily: '"Noto Sans Thai", sans-serif' }}>
+               
+               {/* ส่วนหัวตั๋ว */}
+               <div className="bg-gradient-to-br from-purple-100 via-pink-50 to-white p-6 pb-6 text-center relative border-b-4 border-transparent">
+                  <div className="absolute top-4 left-4 bg-purple-600 text-white px-3 py-1 rounded-full text-[10px] font-black uppercase">
+                     VIP PASS
+                  </div>
+                  <div className="absolute top-4 right-4 text-[10px] text-gray-400 font-mono font-bold">
+                     NO. 00{event.id}
+                  </div>
+
+                  <div className="text-[70px] mt-6 mb-2 leading-none">{event.icon}</div>
+                  <h2 className="text-2xl font-black text-gray-800 mb-4" style={{ lineHeight: '1.4' }}>{event.title}</h2>
+                  
+                  <div className={`inline-block text-[11px] font-bold px-4 py-2 rounded-full uppercase border ${event.status === 'approved' ? 'bg-green-50 text-green-600 border-green-200' : 'bg-orange-50 text-orange-600 border-orange-200'}`}>
+                     {event.status === 'approved' ? '✅ CONFIRMED TRIP' : '🔥 VOTING NOW'}
+                  </div>
+               </div>
+
+               {/* รอยปะ */}
+               <div className="relative w-full flex items-center justify-center py-2 bg-white">
+                  <div className="absolute top-1/2 left-0 w-full border-t-[3px] border-dashed border-gray-300 z-0"></div>
+                  <div className="bg-white px-2 text-gray-400 text-lg z-10 relative leading-none">✂️</div>
+               </div>
+
+               {/* ส่วนข้อมูลและบาร์โค้ด */}
+               <div className="px-6 py-6 bg-white">
+                  <div className="flex w-full gap-3 mb-6">
+                     <div className="flex-1 bg-gray-50 px-4 py-4 rounded-2xl border border-gray-100">
+                        <div className="text-[10px] text-purple-500 font-bold uppercase mb-1">📍 Location</div>
+                        <div className="font-bold text-gray-800 text-sm" style={{ lineHeight: '1.4' }}>{event.location}</div>
+                     </div>
+                     <div className="flex-1 bg-gray-50 px-4 py-4 rounded-2xl border border-gray-100">
+                        <div className="text-[10px] text-orange-500 font-bold uppercase mb-1">👑 Host</div>
+                        <div className="font-bold text-gray-800 text-sm" style={{ lineHeight: '1.4' }}>{event.created_by.name} {event.created_by.emoji}</div>
+                     </div>
+                  </div>
+
+                  {event.status === 'approved' && (
+                     <div className="bg-green-50 px-4 py-3 rounded-2xl border border-green-100 flex items-center justify-center mb-6">
+                        <div className="text-[10px] text-green-600 font-bold uppercase mr-2">🗓️ Date:</div>
+                        <div className="font-black text-green-800 text-sm">
+                           {event.options.find(o => o.id === event.final_option)?.date} • {event.options.find(o => o.id === event.final_option)?.time} น.
+                        </div>
+                     </div>
+                  )}
+
+                  <div className="flex flex-col items-center justify-center opacity-70 mt-2">
+                     <div className="flex h-12 w-full max-w-[220px] justify-between items-end overflow-hidden px-2">
+                        {renderBarcode()}
+                     </div>
+                     <p className="text-[10px] font-mono font-bold mt-3 text-gray-500 uppercase">
+                        WKND-{event.id}-00{event.created_by.id}
+                     </p>
+                  </div>
+               </div>
+            </div>
+
+            <div className="w-full mt-6">
+               <button 
+                  onClick={handleShareAndDownload} 
+                  disabled={isGenerating} 
+                  className="w-full bg-[#06C755] text-white font-black py-4 rounded-2xl shadow-lg flex justify-center items-center gap-2 hover:bg-green-600 transition transform active:scale-95"
+               >
+                 {isGenerating ? 'กำลังสร้างตั๋วสุดคิ้วท์...' : '📸 เซฟรูป และ คัดลอกลิงก์'}
+               </button>
+            </div>
+
+          </div>
+        </div>
+      );
+    }
+
+    // --- Components ---
+    function LoginForm({ users, onLogin, onBack }) {
+      const [username, setUsername] = useState('');
+      const [pin, setPin] = useState('');
+      const [error, setError] = useState('');
+      const handleSubmit = (e) => {
+        e.preventDefault();
+        const foundUser = users.find(u => u.username === username && u.pin === pin);
+        if (foundUser) { onLogin(foundUser); } else { setError('ชื่อผู้ใช้หรือรหัส PIN ไม่ถูกต้อง'); }
+      };
+      return (
+        <div className="mobile-container flex flex-col justify-start p-6 bg-white min-h-screen pt-12">
+          <button type="button" onClick={onBack} className="absolute top-6 left-6 text-2xl text-gray-400">←</button>
+          <div className="text-center mb-10 mt-8"><h1 className="text-4xl font-black gradient-text mb-2">เข้าสู่ระบบ</h1><p className="text-gray-500 mt-1 text-sm">ยินดีต้อนรับกลับมา! ล็อกอินเพื่อดูแก๊งของคุณ</p></div>
+          <form onSubmit={handleSubmit} className="space-y-5">
+            {error && <div className="bg-red-50 text-red-500 p-3 rounded-xl text-sm text-center font-bold">{error}</div>}
+            <input type="text" required value={username} onChange={e => setUsername(e.target.value)} placeholder="Username" className="w-full bg-gray-50 p-4 rounded-2xl outline-none focus:ring-2 ring-purple-300" />
+            <input type="password" inputMode="numeric" required maxLength="5" value={pin} onChange={e => setPin(e.target.value.replace(/[^0-9]/g, ''))} placeholder="PIN 5 หลัก" className="w-full bg-gray-50 p-4 rounded-2xl outline-none focus:ring-2 ring-purple-300 text-center tracking-[1em] font-bold text-xl" />
+            <button type="submit" className="w-full bg-purple-500 text-white rounded-2xl py-4 font-bold text-lg shadow-lg">เข้าสู่ระบบ 🚀</button>
+          </form>
+        </div>
+      );
+    }
+
+    function ProfileSetup({ currentUser, users, existingHouses, onSave, onCancel, onLogout }) {
+      const isRegister = !currentUser;
+      const [username, setUsername] = useState(currentUser?.username || '');
+      const [pin, setPin] = useState(currentUser?.pin || '');
+      const [emoji, setEmoji] = useState(currentUser?.emoji || '');
+      const [name, setName] = useState(currentUser?.name || '');
+      const [phone, setPhone] = useState(currentUser?.phone || '');
+      const [error, setError] = useState('');
+      // --- เพิ่มระบบเช็คชื่อซ้ำแบบ Real-time ---
+      useEffect(() => {
+        if (isRegister && username.length > 0) {
+          const isTaken = users.some(u => u.username.toLowerCase() === username.toLowerCase());
+          if (isTaken) {
+            setError('Username นี้มีคนใช้แล้วครับ ⚠️');
+          } else if (error.includes('Username')) {
+            setError(''); // ลบแจ้งเตือนถ้าเปลี่ยนเป็นชื่อที่ไม่ซ้ำแล้ว
+          }
+        }
+      }, [username, isRegister, users, error]);
+      // ------------------------------------
+      const hasHouses = existingHouses?.length > 0;
+      const [houseMode, setHouseMode] = useState(currentUser ? (existingHouses.includes(currentUser.house) ? 'existing' : 'new') : (hasHouses ? 'existing' : 'new'));
+      const [selectedHouse, setSelectedHouse] = useState(currentUser?.house || (hasHouses ? existingHouses[0] : ''));
+      const [newHouse, setNewHouse] = useState(currentUser && !existingHouses.includes(currentUser.house) ? currentUser.house : '');
+
+      const handleSubmit = async (e) => {
+        e.preventDefault(); setError('');
+        
+        const cleanPhone = phone.replace(/[^0-9]/g, '');
+        if (cleanPhone.length !== 10) return setError('กรุณากรอกเบอร์โทรศัพท์ให้ครบ 10 หลักนะ 📞');
+
+        if (isRegister) {
+           if (pin.length !== 5) return setError('PIN ต้องมีตัวเลข 5 หลัก');
+           // เช็คชื่อซ้ำจากตาราง users ที่ดึงมาจาก Supabase
+           if (users.some(u => u.username.toLowerCase() === username.toLowerCase())) return setError('Username มีคนใช้แล้ว');
+        }
+
+        const finalHouse = houseMode === 'existing' ? selectedHouse : newHouse;
+        
+        if(name && emoji && cleanPhone && finalHouse && username && pin) {
+            
+            // เตรียมข้อมูลส่งเข้าฐานข้อมูล
+            const userData = {
+               username, 
+               pin, 
+               name, 
+               phone: cleanPhone, 
+               emoji, 
+               house: finalHouse 
+            };
+
+            if (currentUser) {
+               // กรณี: แก้ไขโปรไฟล์เดิม (Update)
+               const { data, error } = await supabaseApp
+                  .from('users')
+                  .update(userData)
+                  .eq('id', currentUser.id)
+                  .select();
+
+               if (error) {
+                  console.error(error);
+                  alert('อัปเดตข้อมูลไม่สำเร็จ');
+               } else {
+                  onSave(data[0]); // ส่งข้อมูลที่อัปเดตแล้วกลับไปให้หน้าแอป
+               }
+            } else {
+               // กรณี: สมัครสมาชิกใหม่ (Insert)
+               // สุ่มฉายาให้ด้วย
+               userData.title = MOCK_TITLES[Math.floor(Math.random() * MOCK_TITLES.length)];
+               
+               const { data, error } = await supabaseApp
+                  .from('users')
+                  .insert([userData])
+                  .select();
+
+               if (error) {
+                  console.error(error);
+                  alert('สมัครสมาชิกไม่สำเร็จ (Username อาจซ้ำกับในระบบ)');
+               } else {
+                  onSave(data[0]); // ส่งข้อมูลคนใหม่กลับไปให้หน้าแอป
+               }
+            }
+        }
+      };
+
+      return (
+        <div className="mobile-container flex flex-col p-6 bg-white min-h-screen pt-12 overflow-y-auto">
+          {onCancel && <button type="button" onClick={onCancel} className="absolute top-6 left-6 text-2xl text-gray-400">←</button>}
+          <div className="text-center mb-6"><h1 className="text-4xl font-black gradient-text mb-2">Weekend Vibes.</h1><h2 className="text-2xl font-bold">{isRegister ? 'สร้างบัญชีใหม่ ✨' : 'แก้ไขโปรไฟล์'}</h2></div>
+          <form onSubmit={handleSubmit} className="space-y-4 pb-10">
+            {error && <div className="bg-red-50 text-red-500 p-3 rounded-xl text-sm font-bold text-center">{error}</div>}
+            {isRegister && (
+               <div className="bg-purple-50 p-4 rounded-2xl space-y-3">
+                  <input type="text" required value={username} onChange={e => setUsername(e.target.value.replace(/[^a-zA-Z0-9_]/g, ''))} placeholder="Username (ห้ามซ้ำ)" className="w-full bg-white p-3 rounded-xl outline-none" />
+                  <input type="password" inputMode="numeric" required maxLength="5" value={pin} onChange={e => setPin(e.target.value.replace(/[^0-9]/g, ''))} placeholder="PIN 5 หลัก" className="w-full bg-white p-3 rounded-xl outline-none tracking-widest font-bold" />
+               </div>
+            )}
+            <div className="flex flex-col items-center mt-4">
+              <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center text-5xl relative overflow-hidden">
+                {emoji || '👤'} <input type="text" maxLength="2" required value={emoji} onChange={e => setEmoji(e.target.value)} className="absolute inset-0 opacity-0" />
+              </div>
+            </div>
+            <input type="text" required value={name} onChange={e => setName(e.target.value)} placeholder="ชื่อเรียกในแก๊ง" className="w-full bg-gray-50 p-4 rounded-2xl outline-none" />
+            <input type="tel" required value={phone} onChange={e => setPhone(e.target.value.replace(/[^0-9]/g, ''))} maxLength="10" placeholder="เบอร์โทรศัพท์ (10 หลัก)" className="w-full bg-gray-50 p-4 rounded-2xl outline-none" />
+            <div className="pt-2">
+              <label className="block text-sm font-bold mb-3">🏠 เลือกบ้าน/แก๊งของคุณ</label>
+              <div className="flex bg-gray-100 p-1 rounded-xl mb-3">
+                <button type="button" onClick={() => setHouseMode('existing')} disabled={!hasHouses} className={`flex-1 py-2 text-sm font-bold rounded-lg ${houseMode === 'existing' ? 'bg-white text-purple-600' : 'text-gray-400'}`}>มีอยู่แล้ว</button>
+                <button type="button" onClick={() => setHouseMode('new')} className={`flex-1 py-2 text-sm font-bold rounded-lg ${houseMode === 'new' ? 'bg-white text-purple-600' : 'text-gray-400'}`}>สร้างใหม่</button>
+              </div>
+              {houseMode === 'existing' ? <select value={selectedHouse} onChange={e => setSelectedHouse(e.target.value)} className="w-full bg-gray-50 p-4 rounded-2xl font-medium" required>{existingHouses.map((h, i) => <option key={i} value={h}>{h}</option>)}</select> : <input type="text" value={newHouse} onChange={e => setNewHouse(e.target.value)} placeholder="ชื่อบ้านใหม่" className="w-full bg-gray-50 p-4 rounded-2xl" required />}
+            </div>
+            <button type="submit" className="w-full bg-gradient-to-r from-purple-500 to-blue-500 text-white rounded-2xl py-4 font-bold text-lg mt-4">{isRegister ? 'สมัครสมาชิกเลย! 🚀' : 'บันทึก 💾'}</button>
+            {!isRegister && <button type="button" onClick={onLogout} className="w-full bg-red-50 text-red-500 rounded-2xl py-4 font-bold text-lg mt-2">ออกจากระบบ</button>}
+          </form>
+        </div>
+      );
+    }
+
+    function EventCard({ event, currentUser, setEvents, onEdit, onShare }) {
+      const [expanded, setExpanded] = useState(false);
+      const isCreator = event.created_by.id === currentUser.id;
+      const reactionsList = ['🔥', '🍻', '👀', '🚀'];
+
+      const handleReact = async (emoji) => {
+        const newReacts = {...(event.reactions || {})}; 
+        newReacts[emoji] = (newReacts[emoji] || 0) + 1; 
+        
+        // 1. อัปเดตหน้าจอเราให้ตัวเลขเด้งขึ้นทันที (ให้แอปดูไว)
+        setEvents(prev => prev.map(e => e.id === event.id ? { ...e, reactions: newReacts } : e));
+        
+        // 2. แอบส่งข้อมูลไปเซฟเงียบๆ หลังบ้าน
+        await supabaseApp.from('events').update({ reactions: newReacts }).eq('id', event.id);
+      };
+
+      const toggleVote = async (optId) => {
+        const newOptions = event.options.map(o => { 
+          if (o.id === optId) { 
+            const hasVoted = o.votes.includes(currentUser.id); 
+            return { ...o, votes: hasVoted ? o.votes.filter(id => id !== currentUser.id) : [...o.votes, currentUser.id] }; 
+          } 
+          return o; 
+        });
+
+        // 1. อัปเดตหน้าจอทันที
+        setEvents(prev => prev.map(e => e.id === event.id ? { ...e, options: newOptions } : e));
+        
+        // 2. เซฟลงฐานข้อมูล
+        await supabaseApp.from('events').update({ options: newOptions }).eq('id', event.id);
+      };
+
+      const handleApprove = async (optId) => {
+        if(confirm('ยืนยันเคาะวันนี้? ข้อมูลจะถูกส่งไปให้ทุกคนดูนะ!')) {
+           const theOpt = event.options.find(o => o.id === optId);
+           const participants = theOpt.votes.map(vId => { 
+               if (vId === currentUser.id) return currentUser; 
+               return { id: vId, name: 'เพื่อนในแก๊ง', emoji: '🧑‍💻' }; 
+           });
+           
+           const updateData = { status: 'approved', final_option: optId, participants, cars: [] };
+
+           // 1. เปลี่ยนสถานะหน้าจอเป็น "เคาะแล้ว" ทันที
+           setEvents(prev => prev.map(e => e.id === event.id ? { ...e, ...updateData } : e));
+           
+           // 2. เซฟลงฐานข้อมูล
+           await supabaseApp.from('events').update(updateData).eq('id', event.id);
+        }
+      };
+
+      return (
+        <div className="bg-white p-5 rounded-3xl shadow-sm border border-gray-100 relative">
+          <button onClick={onShare} className="absolute top-4 right-4 bg-gray-50 text-gray-400 p-2 rounded-full hover:bg-gray-100">🔗</button>
+          <div className="flex items-start gap-3 mb-4">
+            <div className="text-4xl bg-orange-50 w-14 h-14 rounded-2xl flex items-center justify-center">{event.icon}</div>
+            <div className="flex-1 pr-6">
+              <h3 className="font-bold text-lg text-gray-900 leading-tight">{event.title}</h3>
+              <p className="text-sm text-gray-500 mt-1">📍 {event.location}</p>
+              <p className="text-xs text-gray-400 mt-1 flex items-center gap-1">สร้างโดย {event.created_by.emoji} {event.created_by.name}</p>
+            </div>
+          </div>
+          {!expanded ? (
+            <button onClick={() => setExpanded(true)} className="w-full bg-purple-50 text-purple-600 font-bold py-3 rounded-2xl mt-2 flex justify-center items-center gap-2 hover:bg-purple-100">📋 ดูรายละเอียด & โหวต <span>⌄</span></button>
+          ) : (
+            <div className="mt-4 pt-4 border-t border-gray-100 space-y-4">
+              <div className="bg-gray-50 p-3 rounded-2xl text-sm space-y-2">
+                {event.map_url && <a href={event.map_url} target="_blank" className="flex items-center gap-2 text-blue-500 font-medium hover:underline">🗺️ ดูแผนที่ Google Maps</a>}
+                {event.ref_links?.map((link, idx) => <a key={idx} href={link} target="_blank" className="flex items-center gap-2 text-pink-500 font-medium hover:underline">💡 ลิงก์แรงบันดาลใจ {idx + 1}</a>)}
+              </div>
+              <div className="space-y-2">
+                <p className="text-sm font-bold text-gray-700">เลือกวันที่สะดวก</p>
+                {event.options.map(opt => {
+                  const isVoted = opt.votes.includes(currentUser.id);
+                  return (
+                    <div key={opt.id} onClick={() => toggleVote(opt.id)} className={`flex justify-between items-center p-4 rounded-2xl cursor-pointer border-2 transition-all ${isVoted ? 'border-green-400 bg-green-50' : 'border-gray-100 bg-white'}`}>
+                      <span className="font-medium">{opt.date} • {opt.time} น.</span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-bold text-gray-500 bg-white px-2 py-1 rounded-lg border border-gray-100">{opt.votes.length} 🙋🏻‍♂️</span>
+                        {isCreator && <button onClick={(e) => { e.stopPropagation(); handleApprove(opt.id); }} className="bg-green-100 text-green-700 text-xs px-2 py-1.5 rounded-lg font-bold">✅ เคาะ</button>}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+              <div className="pt-2 pb-2">
+                 <p className="text-xs font-bold text-gray-400 mb-2">Hype Board 🔥 ปั่นๆ</p>
+                 <div className="flex gap-2">
+                    {reactionsList.map(r => <button key={r} onClick={() => handleReact(r)} className="flex-1 bg-gray-50 py-2 rounded-xl text-center active:scale-95 transition">{r} <span className="text-xs font-bold text-gray-500">{event.reactions?.[r] || 0}</span></button>)}
+                 </div>
+              </div>
+              {isCreator && (
+                <div className="flex gap-2">
+                  <button onClick={onEdit} className="flex-1 border-2 border-purple-200 text-purple-600 font-bold py-2 rounded-2xl">✏️ แก้ไข</button>
+                  <button onClick={() => setEvents(prev => prev.map(e => e.id === event.id ? { ...e, status: 'cancelled' } : e))} className="flex-1 border-2 border-red-100 text-red-500 font-bold py-2 rounded-2xl">❌ ยกเลิก</button>
+                </div>
+              )}
+              <button onClick={() => setExpanded(false)} className="w-full text-gray-400 text-sm font-medium py-2">^ ปิดรายละเอียด</button>
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    function ApprovedCard({ event, currentUser, setEvents, onShare }) {
+      const finalOpt = event.options.find(o => o.id === event.final_option);
+      const isCreator = event.created_by.id === currentUser.id;
+      const cars = event.cars || [];
+      const myCar = cars.find(c => c.driver.id === currentUser.id);
+      const amIPassenger = cars.some(c => c.passengers.some(p => p.id === currentUser.id));
+
+      const [showCarForm, setShowCarForm] = useState(false);
+      const [newCarSeats, setNewCarSeats] = useState("3");
+      const [showMembers, setShowMembers] = useState(false); 
+
+      const handleAddCar = () => {
+         const newCar = { id: Date.now().toString(), driver: currentUser, max_seats: parseInt(newCarSeats), passengers: [] };
+         setEvents(prev => prev.map(e => e.id === event.id ? {...e, cars: [...cars, newCar]} : e));
+         setShowCarForm(false);
+      };
+      const handleRemoveCar = (carId) => {
+         if(confirm('แน่ใจหรือไม่ว่าต้องการยกเลิกรถคันนี้?')) setEvents(prev => prev.map(e => e.id === event.id ? {...e, cars: e.cars.filter(c => c.id !== carId)} : e));
+      };
+      const handleJoinCar = (carId) => {
+         setEvents(prev => prev.map(e => {
+            if(e.id !== event.id) return e;
+            const updatedCars = e.cars.map(c => { if(c.id === carId && c.passengers.length < c.max_seats) return {...c, passengers: [...c.passengers, currentUser]}; return c; });
+            return {...e, cars: updatedCars};
+         }));
+      };
+      const handleLeaveCar = (carId) => {
+         setEvents(prev => prev.map(e => {
+            if(e.id !== event.id) return e;
+            const updatedCars = e.cars.map(c => { if(c.id === carId) return {...c, passengers: c.passengers.filter(p => p.id !== currentUser.id)}; return c; });
+            return {...e, cars: updatedCars};
+         }));
+      };
+
+      return (
+        <div className="bg-white p-5 rounded-3xl shadow-sm border-2 border-green-100 relative mb-4">
+          <button onClick={onShare} className="absolute top-4 right-4 bg-gray-50 text-gray-400 p-2 rounded-full hover:bg-gray-100">🔗</button>
+          <div className="bg-green-100 text-green-700 text-xs font-bold px-3 py-1 rounded-full inline-block mb-3">✅ เคาะแล้ว จัดเลย!</div>
+          <div className="flex gap-3 mb-4">
+             <div className="text-4xl">{event.icon}</div>
+             <div>
+                <h3 className="font-bold text-lg text-gray-900">{event.title}</h3>
+                <p className="text-sm text-gray-600 font-medium mt-1">🗓️ {finalOpt.date} • {finalOpt.time} น.</p>
+                <p className="text-sm text-gray-500 mt-1">📍 {event.location}</p>
+             </div>
+          </div>
+          
+          <div className="bg-gray-50 rounded-2xl p-3 mb-4 border border-gray-100">
+             <div className="flex justify-between items-center cursor-pointer select-none" onClick={() => setShowMembers(!showMembers)}>
+               <div className="flex -space-x-2">
+                 {event.participants.slice(0, 5).map((p, index) => <div key={index} className="w-8 h-8 rounded-full bg-white border-2 border-green-100 flex items-center justify-center text-sm shadow-sm">{p.emoji}</div>)}
+                 {event.participants.length > 5 && <div className="w-8 h-8 rounded-full bg-gray-200 border-2 border-white flex items-center justify-center text-xs font-bold text-gray-600">+{event.participants.length - 5}</div>}
+               </div>
+               <span className="text-xs font-bold text-gray-500 bg-white px-2 py-1 rounded-lg border border-gray-200 shadow-sm flex items-center gap-1">
+                 {event.participants.length} คนไป 🍻 {showMembers ? '▲' : '▼'}
+               </span>
+             </div>
+             {showMembers && (
+                <div className="mt-3 pt-3 border-t border-gray-200">
+                   <p className="text-xs font-bold text-gray-500 mb-2">รายชื่อคนไปลุย ({event.participants.length})</p>
+                   <div className="flex flex-wrap gap-2">
+                      {event.participants.map(p => <span key={p.id} className="bg-white border border-gray-200 px-2 py-1.5 rounded-xl text-xs font-bold text-gray-700 shadow-sm">{p.emoji} {p.name}</span>)}
+                   </div>
+                </div>
+             )}
+          </div>
+
+          <div className="pt-2 border-t border-dashed border-gray-200">
+             <div className="flex justify-between items-center mb-3 mt-2">
+                <p className="text-sm font-bold text-gray-700">🚗 จัดสรรการเดินทาง</p>
+                {!myCar && !amIPassenger && <button onClick={() => setShowCarForm(!showCarForm)} className="text-xs bg-blue-50 text-blue-600 px-3 py-1.5 rounded-xl font-bold shadow-sm hover:bg-blue-100 transition">+ เอารถไปเอง</button>}
+             </div>
+             {showCarForm && (
+                <div className="bg-blue-50 p-3 rounded-2xl mb-3 flex gap-2 items-center border border-blue-100">
+                   <span className="text-xs font-bold text-blue-700">รับเพื่อนได้:</span>
+                   <select value={newCarSeats} onChange={e => setNewCarSeats(e.target.value)} className="p-1.5 rounded-lg text-sm outline-none border border-blue-200 bg-white font-medium text-gray-700">
+                      <option value="1">1 ที่นั่ง</option><option value="2">2 ที่นั่ง</option><option value="3">3 ที่นั่ง</option><option value="4">4 ที่นั่ง</option><option value="5">5 ที่นั่ง</option>
+                   </select>
+                   <button onClick={handleAddCar} className="bg-blue-500 text-white text-xs px-3 py-1.5 rounded-xl font-bold ml-auto shadow-sm hover:bg-blue-600">ยืนยัน</button>
+                </div>
+             )}
+             <div className="space-y-3">
+                {cars.length === 0 && <p className="text-xs text-gray-400 italic text-center py-2">ยังไม่มีใครเอารถไปเลย 🚕</p>}
+                {cars.map(car => {
+                   const isMyCar = car.driver.id === currentUser.id;
+                   const amInThisCar = car.passengers.some(p => p.id === currentUser.id);
+                   const isFull = car.passengers.length >= car.max_seats;
+                   const emptySeats = car.max_seats - car.passengers.length;
+
+                   return (
+                      <div key={car.id} className="bg-white border border-gray-200 rounded-2xl p-3 shadow-sm">
+                         <div className="flex justify-between items-center mb-2">
+                            <p className="font-bold text-sm text-gray-800 flex items-center gap-1">🚘 รถของ {car.driver.name} {car.driver.emoji}</p>
+                            {isMyCar && <button onClick={() => handleRemoveCar(car.id)} className="text-xs text-red-400 font-bold bg-red-50 px-2 py-1 rounded-lg">ยกเลิกรถ</button>}
+                         </div>
+                         <div className="flex gap-2 mb-3 flex-wrap">
+                            <div className="bg-purple-100 px-2 py-1 rounded-lg text-xs font-bold text-purple-700 flex items-center gap-1">{car.driver.emoji} คนขับ</div>
+                            {car.passengers.map(p => <div key={p.id} className="bg-gray-100 border border-gray-200 px-2 py-1 rounded-lg text-xs font-bold text-gray-700 flex items-center gap-1">{p.emoji} {p.name}</div>)}
+                            {Array.from({length: emptySeats}).map((_, i) => <div key={i} className="bg-gray-50 border border-dashed border-gray-300 px-3 py-1 rounded-lg text-xs font-medium text-gray-400 flex items-center justify-center">ว่าง</div>)}
+                         </div>
+                         {!isMyCar && !amInThisCar && !amIPassenger && !isFull && <button onClick={() => handleJoinCar(car.id)} className="w-full bg-blue-50 text-blue-600 py-2 rounded-xl text-xs font-bold hover:bg-blue-100 transition shadow-sm border border-blue-100">🙋 ขอติดรถไปด้วย</button>}
+                         {!isMyCar && amInThisCar && <button onClick={() => handleLeaveCar(car.id)} className="w-full bg-red-50 text-red-500 py-2 rounded-xl text-xs font-bold hover:bg-red-100 transition shadow-sm border border-red-100">🚪 ลงจากรถ (ยกเลิก)</button>}
+                         {isFull && !amInThisCar && !isMyCar && <div className="w-full bg-gray-100 text-gray-400 py-2 rounded-xl text-xs font-bold text-center border border-gray-200">เต็มแล้ว 😭</div>}
+                      </div>
+                   )
+                })}
+             </div>
+          </div>
+        </div>
+      );
+    }
+
+    function HistoryCard({ event, setEvents }) {
+      const [expanded, setExpanded] = useState(false);
+      const isApproved = event.status === 'approved';
+      const fileInputRef = useRef(null);
+
+      const handleFileChange = (e) => {
+         const files = Array.from(e.target.files);
+         if (!files.length) return;
+         if ((event.photos?.length || 0) + files.length > 100) {
+            alert('อัปโหลดรูปได้สูงสุด 100 รูปต่อทริปเท่านั้นจ้า 📸');
+            if(fileInputRef.current) fileInputRef.current.value = '';
+            return;
+         }
+         Promise.all(files.map(file => new Promise((res) => { const reader = new FileReader(); reader.onload = e => res(e.target.result); reader.readAsDataURL(file); })))
+         .then(base64Images => {
+            setEvents(prev => prev.map(ev => ev.id === event.id ? { ...ev, photos: [...(ev.photos || []), ...base64Images] } : ev));
+         });
+         if(fileInputRef.current) fileInputRef.current.value = '';
+      };
+
+      return (
+        <div className="bg-white p-5 rounded-3xl shadow-sm border border-gray-100">
+          <div className="flex items-start gap-3 mb-2">
+            <div className="text-4xl bg-gray-50 w-14 h-14 rounded-2xl flex items-center justify-center grayscale">{event.icon}</div>
+            <div className="flex-1">
+              <h3 className="font-bold text-lg text-gray-900 leading-tight">{event.title}</h3>
+              <span className={`text-xs font-bold inline-block px-2 py-1 rounded-full mt-1 ${isApproved ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-500'}`}>
+                 {isApproved ? '✅ จบกิจกรรมแล้ว' : '❌ ยกเลิก/หมดเวลา'}
+              </span>
+            </div>
+          </div>
+          {!expanded ? (
+            <button onClick={() => setExpanded(true)} className="w-full bg-gray-50 text-gray-500 font-bold py-3 rounded-2xl mt-3 flex justify-center items-center gap-2">📋 ดูประวัติ / รูป <span>⌄</span></button>
+          ) : (
+            <div className="mt-4 pt-4 border-t border-gray-100 space-y-4">
+              {isApproved && (
+                <div className="bg-gray-50 p-4 rounded-2xl">
+                   <div className="flex justify-between items-center mb-3">
+                      <p className="text-sm font-bold text-gray-700">📸 Photo Dump <span className="text-xs font-normal text-gray-400">({event.photos?.length || 0}/100)</span></p>
+                      <input type="file" accept="image/*" multiple ref={fileInputRef} onChange={handleFileChange} className="hidden" />
+                      <button onClick={() => fileInputRef.current.click()} className="text-xs bg-white border border-gray-200 px-3 py-1.5 rounded-lg font-bold shadow-sm hover:bg-gray-50 transition">+ โยนรูป</button>
+                   </div>
+                   <div className="flex gap-2 overflow-x-auto hide-scrollbar pb-2">
+                      {event.photos?.map((p, i) => <img key={i} src={p} alt="trip_photo" className="w-24 h-24 object-cover rounded-xl shadow-sm flex-shrink-0 border-2 border-white" />)}
+                      {(!event.photos || event.photos.length === 0) && <p className="text-xs text-gray-400 italic py-4 text-center w-full">ยังไม่มีรูป โยนรูปอวดเพื่อนเลย!</p>}
+                   </div>
+                </div>
+              )}
+              <div className="space-y-2">
+                <p className="text-sm font-bold text-gray-700">ผลโหวต</p>
+                {event.options.map(opt => (
+                  <div key={opt.id} className="flex justify-between items-center p-3 rounded-xl border border-gray-100 bg-gray-50">
+                    <span className="text-sm font-medium">{opt.date} {event.final_option === opt.id && '✅'}</span>
+                    <span className="text-xs font-bold text-gray-500">{opt.votes.length} 🙋🏻‍♂️</span>
+                  </div>
+                ))}
+              </div>
+              <button onClick={() => setExpanded(false)} className="w-full text-gray-400 text-sm font-medium py-2">^ ปิดรายละเอียด</button>
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    function HouseSummary({ users, houses, onClose }) {
+      const grouped = users.reduce((acc, u) => { if(!acc[u.house]) acc[u.house] = []; acc[u.house].push(u); return acc; }, {});
+      return (
+        <div className="absolute inset-0 bg-gray-50 z-50 overflow-y-auto pb-10">
+          <div className="sticky top-0 bg-white p-4 flex items-center gap-3 border-b border-gray-100"><button onClick={onClose} className="text-2xl w-10">←</button><h2 className="text-xl font-bold">🏠 บ้านทั้งหมด</h2></div>
+          <div className="p-4 space-y-4">
+            {Object.keys(grouped).map(h => (
+              <div key={h} className="bg-white rounded-2xl shadow-sm overflow-hidden">
+                <div className="bg-purple-50 px-4 py-3 font-bold flex justify-between"><span>{h}</span><span>{grouped[h].length} คน</span></div>
+                <div className="divide-y divide-gray-50">
+                  {grouped[h].map(u => (
+                    <div key={u.id} className="p-4 flex gap-4 items-center">
+                      <div className="text-3xl">{u.emoji}</div>
+                      <div>
+                         <p className="font-bold text-gray-800">{u.name} <span className="text-xs text-gray-400 font-normal">(@{u.username})</span></p>
+                         <p className="text-[11px] font-bold text-orange-500 mb-0.5">{u.title}</p>
+                         <p className="text-xs text-gray-500 font-medium">📞 {u.phone}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      );
+    }
+
+    function CreateEditForm({ currentUser, onClose, setEvents, initialData }) {
+      const [icon, setIcon] = useState(initialData?.icon || '');
+      const [title, setTitle] = useState(initialData?.title || '');
+      const [location, setLocation] = useState(initialData?.location || '');
+      const [mapUrl, setMapUrl] = useState(initialData?.map_url || '');
+      const [refLinks, setRefLinks] = useState(initialData?.ref_links?.length ? initialData.ref_links : ['']);
+      const [options, setOptions] = useState(initialData?.options || [{ id: Date.now(), date: '', time: '08:00', votes: [] }]);
+
+      const addRefLink = () => setRefLinks([...refLinks, '']);
+      const updateRefLink = (index, value) => { const newLinks = [...refLinks]; newLinks[index] = value; setRefLinks(newLinks); };
+      const removeRefLink = (index) => setRefLinks(refLinks.filter((_, i) => i !== index));
+
+      const handleSubmit = async (e) => {
+        e.preventDefault();
+        
+        // 1. เตรียมข้อมูลที่จะส่งไปเซฟที่ Supabase
+        const eventData = { 
+           icon: icon || '✨', 
+           title: title, 
+           location: location, 
+           map_url: mapUrl,
+           ref_links: refLinks.filter(l => l.trim() !== ''), 
+           options: options.filter(o => o.date), 
+           status: initialData ? initialData.status : 'exploring', 
+           created_by: currentUser.id, // เซฟแค่ ID ของคนสร้างลงฐานข้อมูล
+           participants: initialData ? initialData.participants : [], 
+           cars: initialData ? initialData.cars : [], 
+           reactions: initialData ? initialData.reactions : {'🔥':0} 
+        };
+
+        if (initialData) {
+           // --- กรณี: แก้ไขกิจกรรม (Update) ---
+           const { data, error } = await supabaseApp
+             .from('events')
+             .update(eventData)
+             .eq('id', initialData.id) // ระบุว่าแก้ก้อนไหน
+             .select();
+             
+           if (error) {
+              console.error(error);
+              alert("บันทึกการแก้ไขไม่สำเร็จ!");
+           } else {
+              // ประกอบร่างข้อมูลกลับมาให้หน้าจอ (เอาข้อมูลคนสร้างยัดกลับเข้าไป)
+              const updatedEvent = { ...data[0], created_by: currentUser };
+              setEvents(prev => prev.map(ev => ev.id === initialData.id ? updatedEvent : ev));
+              onClose();
+           }
+        } else {
+           // --- กรณี: สร้างกิจกรรมใหม่ (Insert) ---
+           const { data, error } = await supabaseApp
+             .from('events')
+             .insert([eventData])
+             .select();
+             
+           if (error) {
+              console.error(error);
+              alert("สร้างกิจกรรมไม่สำเร็จ!");
+           } else {
+              // ประกอบร่างข้อมูลให้หน้าจอ
+              const newEvent = { ...data[0], created_by: currentUser };
+              setEvents(prev => [newEvent, ...prev]);
+              onClose();
+           }
+        }
+      };
+
+      return (
+        <div className="absolute inset-0 bg-white z-50 overflow-y-auto pb-24">
+          <div className="sticky top-0 bg-white p-4 flex gap-3 border-b border-gray-100 z-10"><button onClick={onClose} className="w-10 font-bold">←</button><h2 className="font-bold text-xl">{initialData ? 'แก้ไข' : 'สร้างใหม่ ✨'}</h2></div>
+          <form onSubmit={handleSubmit} className="p-5 space-y-5">
+            <div className="flex gap-2">
+              <input type="text" maxLength="2" required placeholder="✨" value={icon} onChange={e => setIcon(e.target.value)} className="w-16 bg-gray-50 p-4 rounded-2xl text-center text-xl outline-none focus:ring-2 ring-purple-300" />
+              <input type="text" required placeholder="ชื่อกิจกรรม (เช่น ปาร์ตี้หมูกระทะ)" value={title} onChange={e => setTitle(e.target.value)} className="flex-1 bg-gray-50 p-4 rounded-2xl outline-none focus:ring-2 ring-purple-300" />
+            </div>
+            <input type="text" required placeholder="📍 สถานที่" value={location} onChange={e => setLocation(e.target.value)} className="w-full bg-gray-50 p-4 rounded-2xl outline-none focus:ring-2 ring-purple-300" />
+            <div>
+              <label className="block font-bold text-gray-800 mb-2 text-sm">🗺️ ลิงก์ Google Maps (ถ้ามี)</label>
+              <input type="url" placeholder="https://maps.google.com/..." value={mapUrl} onChange={e => setMapUrl(e.target.value)} className="w-full bg-gray-50 p-4 rounded-2xl outline-none text-sm focus:ring-2 ring-purple-300" />
+            </div>
+            <div>
+              <label className="flex justify-between items-end mb-2"><span className="font-bold text-gray-800 text-sm">💡 ลิงก์แรงบันดาลใจ</span><span className="text-xs text-gray-400">TikTok/IG (ใส่ได้หลายลิงก์)</span></label>
+              <div className="space-y-2">
+                {refLinks.map((link, idx) => (
+                  <div key={idx} className="flex gap-2">
+                    <input type="url" placeholder="วางลิงก์ที่นี่..." value={link} onChange={e => updateRefLink(idx, e.target.value)} className="flex-1 bg-gray-50 p-4 rounded-2xl outline-none text-sm focus:ring-2 ring-purple-300" />
+                    {refLinks.length > 1 && <button type="button" onClick={() => removeRefLink(idx)} className="w-12 bg-gray-50 rounded-2xl flex items-center justify-center text-gray-400 hover:text-red-500 font-bold text-xl">×</button>}
+                  </div>
+                ))}
+              </div>
+              <button type="button" onClick={addRefLink} className="w-full mt-2 py-3 border-2 border-dashed border-gray-200 rounded-2xl text-gray-500 text-sm font-bold hover:bg-gray-50 transition">+ เพิ่มลิงก์</button>
+            </div>
+            <div className="space-y-3">
+               <p className="font-bold text-sm">📅 วันที่เสนอ</p>
+               {options.map((opt, i) => (
+                 <div key={opt.id} className="flex gap-2">
+                   <input type="date" required value={opt.date} onChange={e => setOptions(options.map(o => o.id === opt.id ? {...o, date: e.target.value} : o))} className="flex-1 bg-gray-50 p-3 rounded-xl text-sm outline-none" />
+                 </div>
+               ))}
+               <button type="button" onClick={() => setOptions([...options, { id: Date.now(), date: '', time: '08:00', votes: [] }])} className="text-purple-500 font-bold text-sm">+ เพิ่มวัน</button>
+            </div>
+            <button type="submit" className="w-full bg-[#a855f7] text-white py-4 rounded-2xl font-bold text-lg mt-8">สร้างเลย! 🚀</button>
+          </form>
+        </div>
+      );
+    }
+
+    function EmptyState() { return <div className="py-12 flex flex-col items-center opacity-70 border-2 border-dashed border-gray-200 rounded-3xl mx-2"><div className="text-6xl mb-4">🫧</div><p className="text-gray-500 font-medium">ยังไม่มีข้อมูล</p></div>; }
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<App />);
+  </script>
+</body>
+</html>
