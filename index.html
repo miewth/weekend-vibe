@@ -28,66 +28,17 @@
 <script type="text/babel">
     const { useState, useEffect, useRef } = React;
 
-    // --- เชื่อมต่อ Supabase (ขั้นที่ 4) ---
+    // --- เชื่อมต่อ Supabase ---
     const { createClient } = supabase;
     const supabaseUrl = 'https://yifaesmogvggvzsfkcwr.supabase.co'; 
     const supabaseKey = 'sb_publishable_3AJO1MhySIrtl1ZvBQTcTw_F3PjUpRI'; 
     const supabaseApp = createClient(supabaseUrl, supabaseKey);
 
-    // --- Mock Data ---
     const MOCK_TITLES = ['ตัวตึงหมูกระทะ 🥓', 'แม่งานท่านหนึ่ง 👑', 'ผู้ประสบภัย 🏕️', 'สายปาร์ตี้ 🍻', 'นักล่าคาเฟ่ ☕', 'ตัวแบกทริป 🎒', 'สภาพพพ 🫠', 'เน้นเข้าร่วม ไม่เน้นช่วย 🏃‍♂️', 'ตื่นสายแต่มานะ 🛌', 'ตัวมารดา 💅', 'ดาวติ๊กต็อก 📱', 'สายคอนเทนต์ 📸', 'เงินเดือนออกค่อยคุย 💸', 'กินหรูอยู่ยาจก 🍜', 'เดี๋ยวตามไป 🚕', 'สายแบกตับ 🍻', 'นักรีวิวป้ายยา 🛍️', 'ชีพจรลงเท้า 🗺️', 'สู้ชีวิตแต่ชีวิตสู้กลับ 🥊', 'ฟีลปล่อยจอย 🍃', 'วันๆหาแต่ทำ 🤸‍♀️', 'เพื่อนลากมา 🧟‍♂️', 'ใจสู้แต่ร่างพัง 🦴', 'ของแทร่ 💯', 'สายกินแหลก 🍽️', 'ตัวรันวงการ 🏃‍♀️', 'ตัวเปิดประจำตี้ 🍾', 'คนชงประจำโต๊ะ 🧊', 'ตัวนอนน้อย 🐼', 'จองคิวหมอนวด 💆‍♀️', 'สายมูเตลู 🔮', 'ทรงซ้อออฟฟิศ 💄', 'ตัวบัคของกลุ่ม 🐛'];
     const MOCK_HOUSES = ['บ้านสีแดง', 'ชมรมคนชอบนอน', 'แก๊งหมูกระทะ'];
-    
-    const MOCK_USERS = [
-      { id: 99, username: 'boy', pin: '12345', name: 'พี่บอย', phone: '0812345678', emoji: '😎', house: 'แก๊งหมูกระทะ', title: 'ตัวตึงหมูกระทะ 🥓' },
-      { id: 88, username: 'joy', pin: '11111', name: 'น้องจอย', phone: '0898765432', emoji: '👧🏻', house: 'ชมรมคนชอบนอน', title: 'แม่งานท่านหนึ่ง 👑' },
-      { id: 77, username: 'somchai', pin: '54321', name: 'สมชาย', phone: '0855555555', emoji: '👦🏽', house: 'บ้านสีแดง', title: 'ผู้ประสบภัย 🏕️' },
-      { id: 66, username: 'earth', pin: '12345', name: 'พี่เอิร์ท', phone: '0899999999', emoji: '🚙', house: 'แก๊งหมูกระทะ', title: 'ตัวแบกทริป 🎒' }
-    ];
-
-    const MOCK_EVENTS = [
-      {
-        id: 1,
-        icon: '🏕️',
-        title: 'แคมป์ปิ้งเขาใหญ่',
-        location: 'เขาใหญ่',
-        map_url: 'https://maps.app.goo.gl/example',
-        ref_links: ['https://tiktok.com/example'],
-        options: [
-          { id: 101, date: '2026-12-10', time: '08:00', votes: [99] },
-          { id: 102, date: '2026-12-17', time: '08:00', votes: [] }
-        ],
-        status: 'exploring',
-        created_by: MOCK_USERS[0],
-        reactions: { '🔥': 2, '🍻': 0, '👀': 1, '🚀': 0 },
-        cars: []
-      },
-      {
-        id: 2, 
-        icon: '🌊',
-        title: 'ทริปหนีงานไปบางแสน',
-        location: 'บางแสน ชลบุรี',
-        map_url: '',
-        ref_links: [],
-        options: [{ id: 201, date: '2026-08-10', time: '10:00', votes: [99, 88, 77, 66] }],
-        final_option: 201,
-        status: 'approved',
-        created_by: MOCK_USERS[1],
-        participants: [MOCK_USERS[1], MOCK_USERS[0], MOCK_USERS[2], MOCK_USERS[3]],
-        reactions: { '🔥': 5, '🍻': 8, '👀': 2, '🚀': 1 },
-        photos: [],
-        cars: [{ id: 'c1', driver: MOCK_USERS[3], max_seats: 3, passengers: [MOCK_USERS[0]] }]
-      }
-    ];
-
-    const MOCK_WISHLISTS = [
-      { id: 1, text: 'อยากไปกินชาบูหมาล่า แถวบรรทัดทอง', link: 'https://tiktok.com/shabu', votes: 12 },
-      { id: 2, text: 'ไปตีแบดหลังเลิกงานกันป่าว', link: '', votes: 5 }
-    ];
 
    function App() {
       const [currentUser, setCurrentUser] = useState(null);
-      
       const [users, setUsers] = useState([]);
       const [houses, setHouses] = useState(MOCK_HOUSES); 
       const [events, setEvents] = useState([]);
@@ -101,24 +52,15 @@
 
       useEffect(() => {
         async function fetchData() {
-          const { data: usersData } = await supabaseApp
-             .from('users')
-             .select('*');
+          const { data: usersData } = await supabaseApp.from('users').select('*');
           if (usersData) setUsers(usersData);
 
-          const { data: eventsData } = await supabaseApp
-             .from('events')
-             .select('*, created_by:users(*)')
-             .order('id', { ascending: false }); 
+          const { data: eventsData } = await supabaseApp.from('events').select('*, created_by:users(*)').order('id', { ascending: false }); 
           if (eventsData) setEvents(eventsData);
 
-          const { data: wishlistsData } = await supabaseApp
-             .from('wishlists')
-             .select('*')
-             .order('votes', { ascending: false }); 
+          const { data: wishlistsData } = await supabaseApp.from('wishlists').select('*').order('votes', { ascending: false }); 
           if (wishlistsData) setWishlists(wishlistsData);
         }
-
         fetchData();
       }, []); 
 
@@ -276,29 +218,18 @@
       );
     }
 
-    // --- Tab ไอเดีย (Wishlist) ---
     function WishlistTab({ wishlists, setWishlists }) {
       const [text, setText] = useState('');
       const [link, setLink] = useState('');
 
       const handleSubmit = async (e) => {
         e.preventDefault();
-        
         if (text) {
           const newIdea = { text: text, link: link, votes: 0 };
-          
-          const { data, error } = await supabaseApp
-             .from('wishlists')
-             .insert([newIdea])
-             .select();
-          
-          if (error) {
-             console.error(error);
-             alert('บันทึกไอเดียไม่สำเร็จ!');
-          } else {
+          const { data, error } = await supabaseApp.from('wishlists').insert([newIdea]).select();
+          if (!error) {
              setWishlists(prev => [data[0], ...prev]);
-             setText(''); 
-             setLink(''); 
+             setText(''); setLink(''); 
           }
         }
       };
@@ -329,7 +260,6 @@
       );
     }
 
-    // --- Share Modal (FOMO) + Save Image Fix เปิดแท็บใหม่ให้กดบันทึกลงแกลเลอรีรูปภาพบนมือถือได้ ---
     function ShareTicketModal({ event, onClose }) {
       const ticketRef = useRef(null);
       const [isGenerating, setIsGenerating] = useState(false);
@@ -353,53 +283,40 @@
 
         if (ticketRef.current && window.html2canvas) {
            try {
-              await new Promise(res => setTimeout(res, 500));
-              
-              const canvas = await window.html2canvas(ticketRef.current, { 
-                 backgroundColor: '#ffffff', 
-                 scale: 3, 
+              // รอให้ฟอนต์โหลดเสร็จสมบูรณ์ก่อน ป้องกันตัวอักษรขยับ/reflow ตอนแคปเจอร์
+              if (document.fonts && document.fonts.ready) { await document.fonts.ready; }
+              await new Promise(res => setTimeout(res, 300));
+
+              const node = ticketRef.current;
+              // สำคัญ: "ห้าม" บังคับ windowWidth/windowHeight ให้เท่ากับขนาดของตั๋วเอง
+              // เพราะตั๋วอยู่ใน overlay แบบ "fixed inset-0 flex justify-center" ที่คำนวณ
+              // การจัด center จากความกว้างจอจริงทั้งหมด ถ้าเราลดขนาด virtual window ลง
+              // มาเท่าตัวตั๋ว มันจะทำให้ overlay คำนวณ layout ใหม่ผิดเพี้ยนไปจากที่เห็นจริง
+              // (นี่คือสาเหตุที่รูปเซฟก่อนหน้านี้เบี้ยว ไม่ center) ปล่อยให้ html2canvas ใช้
+              // ขนาดจอจริง (window.innerWidth/innerHeight) เหมือนที่ผู้ใช้เห็นตอน popup เป๊ะๆ
+              const canvas = await window.html2canvas(node, {
+                 backgroundColor: '#ffffff',
+                 scale: 3,
                  useCORS: true,
                  logging: false,
-                 windowWidth: 480 
+                 scrollX: 0,
+                 scrollY: -window.scrollY,
               });
-
               const imageURL = canvas.toDataURL("image/jpeg", 0.95);
-              
-              // 📱 แก้ไขจุดนี้: สำหรับมือถือและคอมพิวเตอร์ เปิดแท็บใหม่แสดงรูปเพื่อให้กดค้าง "Add to Photos / บันทึกรูปภาพ" ได้ทันที
               const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
               
               if (isMobile) {
                 const newWindow = window.open();
                 if (newWindow) {
-                  newWindow.document.write(`
-                    <html>
-                      <head><title>Weekend Vibes Ticket</title><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
-                      <body style="background:#f3f4f6; margin:0; padding:20px; text-align:center; font-family:sans-serif;">
-                        <div style="max-width:480px; margin:0 auto;">
-                          <img src="${imageURL}" style="width:100%; border-radius:24px; box-shadow:0 10px 25px rgba(0,0,0,0.2);" />
-                          <p style="margin-top:20px; font-size:16px; color:#333; font-weight:bold;">👆 กดค้างที่รูปภาพด้านบน แล้วเลือก <br><span style="color:#059669; font-size:18px;">"Add to Photos"</span> หรือ <span style="color:#059669; font-size:18px;">"บันทึกรูปภาพ"</span></p>
-                        </div>
-                      </body>
-                    </html>
-                  `);
+                  newWindow.document.write(`<html><head><title>Ticket</title><meta name="viewport" content="width=device-width, initial-scale=1.0"></head><body style="background:#f3f4f6; margin:0; padding:20px; text-align:center; font-family:sans-serif;"><div style="max-width:480px; margin:0 auto;"><img src="${imageURL}" style="width:100%; border-radius:24px; box-shadow:0 10px 25px rgba(0,0,0,0.2);"/><p style="margin-top:20px; font-size:16px; color:#333; font-weight:bold;">👆 กดค้างที่รูปภาพด้านบน แล้วเลือก <br><span style="color:#059669; font-size:18px;">"Add to Photos"</span> หรือ <span style="color:#059669; font-size:18px;">"บันทึกรูปภาพ"</span></p></div></body></html>`);
                 } else {
-                  const link = document.createElement('a');
-                  link.href = imageURL;
-                  link.download = `weekend-vibes-${event.id}.jpg`;
-                  link.click();
+                  const link = document.createElement('a'); link.href = imageURL; link.download = `weekend-vibes-${event.id}.jpg`; link.click();
                 }
               } else {
-                const link = document.createElement('a');
-                link.href = imageURL;
-                link.download = `weekend-vibes-${event.id}.jpg`;
-                link.click();
+                const link = document.createElement('a'); link.href = imageURL; link.download = `weekend-vibes-${event.id}.jpg`; link.click();
               }
-
-              alert('✅ คัดลอกข้อความชวนเพื่อนแล้ว!\n(รูปตั๋วเปิดขึ้นมาแล้ว สามารถกดบันทึกลงแกลเลอรีได้เลย)');
-           } catch (error) { 
-              console.error(error);
-              alert('✅ คัดลอกข้อความชวนเพื่อนเรียบร้อยแล้ว!'); 
-           }
+              alert('✅ คัดลอกข้อความชวนเพื่อนแล้ว!');
+           } catch (error) { alert('✅ คัดลอกข้อความชวนเพื่อนเรียบร้อยแล้ว!'); }
         }
         setIsGenerating(false);
         onClose();
@@ -408,89 +325,80 @@
       return (
         <div className="fixed inset-0 bg-black/60 z-[100] flex flex-col items-center justify-center p-4 backdrop-blur-sm overflow-y-auto">
           <div className="w-full max-w-sm relative my-auto">
-            
             <button onClick={onClose} className="absolute -top-12 right-0 text-white font-bold text-xl bg-white/20 w-10 h-10 rounded-full hover:bg-white/40 transition">✕</button>
-            
-            <div ref={ticketRef} className="w-full bg-white rounded-[24px] overflow-hidden flex flex-col relative text-left" style={{ boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.4)', fontFamily: '"Noto Sans Thai", sans-serif' }}>
-               
-               <div className="bg-gradient-to-br from-purple-100 via-pink-50 to-white pt-10 pb-8 px-6 text-center relative border-b-4 border-transparent flex flex-col items-center justify-center">
-                  <div className="w-full grid grid-cols-3 items-center mb-4">
-                     <div className="flex justify-start">
-                        <span className="bg-purple-600 text-white px-3.5 py-1.5 rounded-full text-[10px] font-black uppercase shadow-sm">
-                            VIP PASS
-                        </span>
-                     </div>
-                     <div></div>
-                     <div className="flex justify-end">
-                        <span className="text-[11px] text-gray-400 font-mono font-bold tracking-wider">
-                            NO. 00{event.id}
-                        </span>
-                     </div>
-                  </div>
-
-                  <div className="text-[65px] my-2 leading-none flex items-center justify-center">{event.icon}</div>
-                  <h2 className="text-2xl font-black text-gray-800 mb-5 px-3" style={{ lineHeight: '1.4' }}>{event.title}</h2>
-                  
-                  <div className="w-full text-center py-1">
-                     <div className={`text-[11px] font-bold py-3 rounded-full uppercase border shadow-sm tracking-wide mx-auto ${event.status === 'approved' ? 'bg-green-50 text-green-600 border-green-200' : 'bg-orange-50 text-orange-600 border-orange-200'}`} style={{ width: '180px', display: 'block', margin: '0 auto', textAlign: 'center' }}>
-                         {event.status === 'approved' ? '✅ CONFIRMED TRIP' : '🔥 VOTING NOW'}
-                     </div>
-                  </div>
+            <div ref={ticketRef} className="w-full bg-white rounded-[20px] overflow-hidden flex flex-col relative text-left" style={{ boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.4)', fontFamily: '"Noto Sans Thai", sans-serif' }}>
+               {/* --- Ticket top ribbon --- */}
+               <div className="relative bg-gradient-to-r from-purple-600 via-fuchsia-600 to-purple-600 px-5 py-3 flex items-center justify-between">
+                  <span className="text-white text-[10px] font-black uppercase tracking-[0.2em] leading-none inline-block">Weekend Vibes</span>
+                  <span className="text-white/80 text-[10px] font-mono font-bold tracking-widest leading-none inline-block">E-TICKET</span>
                </div>
 
-               <div className="relative w-full flex items-center justify-center py-2 bg-white">
-                  <div className="absolute top-1/2 left-0 w-full border-t-[3px] border-dashed border-gray-300 z-0"></div>
-                  <div className="bg-white px-2 text-gray-400 text-lg z-10 relative leading-none">✂️</div>
+               {/* --- Main stage --- */}
+               <div className="bg-gradient-to-b from-purple-50 via-white to-white pt-7 pb-6 px-6 text-center relative flex flex-col items-center justify-center">
+                  <div className="w-full flex items-center justify-center mb-3">
+                     <span className={`inline-flex items-center justify-center leading-none text-[10px] font-black uppercase tracking-[0.15em] px-3 py-2 rounded-full border shadow-sm ${event.status === 'approved' ? 'bg-green-500 text-white border-green-500' : 'bg-orange-500 text-white border-orange-500'}`}>
+                        {event.status === 'approved' ? '✅ CONFIRMED' : '🔥 VOTING NOW'}
+                     </span>
+                  </div>
+                  <div className="text-[60px] my-1 leading-none flex items-center justify-center drop-shadow-sm">{event.icon}</div>
+                  <h2 className="text-2xl font-black text-gray-900 px-2 leading-snug" style={{ lineHeight: '1.35' }}>{event.title}</h2>
+                  <p className="text-[11px] font-bold text-purple-400 uppercase tracking-[0.2em] mt-2 leading-none inline-flex items-center justify-center gap-1">Admit One <span>🎟️</span></p>
                </div>
 
-               <div className="px-6 py-6 bg-white">
-                  <div className="flex w-full gap-3 mb-6">
-                     <div className="flex-1 bg-gray-50 px-4 py-4 rounded-2xl border border-gray-100">
-                        <div className="text-[10px] text-purple-500 font-bold uppercase mb-1">📍 Location</div>
-                        <div className="font-bold text-gray-800 text-sm" style={{ lineHeight: '1.4' }}>{event.location}</div>
+               {/* --- Perforated tear line with punched notches --- */}
+               <div className="relative w-full py-3 bg-white">
+                  <div className="absolute top-1/2 left-5 right-5 border-t-2 border-dashed border-gray-300 -translate-y-1/2 z-0"></div>
+                  <div className="absolute -left-3 top-1/2 w-6 h-6 rounded-full bg-[#3a3a45] -translate-y-1/2 z-20"></div>
+                  <div className="absolute -right-3 top-1/2 w-6 h-6 rounded-full bg-[#3a3a45] -translate-y-1/2 z-20"></div>
+               </div>
+
+               {/* --- Stub info grid --- */}
+               <div className="px-6 pt-1 pb-6 bg-white">
+                  <div className="grid grid-cols-2 gap-3 mb-4">
+                     <div className="bg-gray-50 px-4 py-3 rounded-2xl border border-gray-100">
+                        <div className="text-[9px] text-purple-500 font-black uppercase tracking-wider leading-none mb-1.5 inline-flex items-center gap-1">📍<span>Venue</span></div>
+                        <div className="font-bold text-gray-800 text-sm leading-snug" style={{ lineHeight: '1.4' }}>{event.location}</div>
                      </div>
-                     <div className="flex-1 bg-gray-50 px-4 py-4 rounded-2xl border border-gray-100">
-                        <div className="text-[10px] text-orange-500 font-bold uppercase mb-1">👑 Host</div>
-                        <div className="font-bold text-gray-800 text-sm" style={{ lineHeight: '1.4' }}>{event.created_by.name} {event.created_by.emoji}</div>
+                     <div className="bg-gray-50 px-4 py-3 rounded-2xl border border-gray-100">
+                        <div className="text-[9px] text-orange-500 font-black uppercase tracking-wider leading-none mb-1.5 inline-flex items-center gap-1">👑<span>Host</span></div>
+                        <div className="font-bold text-gray-800 text-sm leading-snug" style={{ lineHeight: '1.4' }}>{event.created_by.name} {event.created_by.emoji}</div>
                      </div>
                   </div>
 
-                  {event.status === 'approved' && (
-                     <div className="bg-green-50 px-4 py-3 rounded-2xl border border-green-100 flex items-center justify-center mb-6">
-                        <div className="text-[10px] text-green-600 font-bold uppercase mr-2">🗓️ Date:</div>
-                        <div className="font-black text-green-800 text-sm">
+                  {event.status === 'approved' ? (
+                     <div className="bg-green-50 px-4 py-3 rounded-2xl border border-green-100 flex items-center justify-center gap-2 mb-5">
+                        <span className="text-[10px] text-green-600 font-black uppercase tracking-wider leading-none inline-flex items-center gap-1">🗓️<span>Show Date</span></span>
+                        <span className="font-black text-green-800 text-sm leading-none inline-block">
                            {event.options.find(o => o.id === event.final_option)?.date} • {event.options.find(o => o.id === event.final_option)?.time} น.
-                        </div>
+                        </span>
+                     </div>
+                  ) : (
+                     <div className="bg-orange-50 px-4 py-3 rounded-2xl border border-orange-100 flex items-center justify-center gap-2 mb-5">
+                        <span className="text-[10px] text-orange-600 font-black uppercase tracking-wider leading-none inline-flex items-center gap-1">🗳️<span>กำลังเปิดโหวตวัน</span></span>
                      </div>
                   )}
 
-                  <div className="flex flex-col items-center justify-center opacity-70 mt-2">
-                     <div className="flex h-12 w-full max-w-[220px] justify-between items-end overflow-hidden px-2">
-                        {renderBarcode()}
-                     </div>
-                     <p className="text-[10px] font-mono font-bold mt-3 text-gray-500 uppercase">
-                        WKND-{event.id}-00{event.created_by.id}
-                     </p>
+                  <div className="flex items-center justify-between mb-3 px-1">
+                     <span className="text-[9px] text-gray-400 font-black uppercase tracking-widest leading-none inline-block">Seat</span>
+                     <span className="text-[9px] text-gray-400 font-black uppercase tracking-widest leading-none inline-block">General Admission</span>
+                     <span className="text-[9px] text-gray-400 font-black uppercase tracking-widest leading-none inline-block">Ticket No.</span>
+                  </div>
+                  <div className="flex flex-col items-center justify-center border-t-2 border-dashed border-gray-200 pt-4">
+                     <div className="flex h-12 w-full max-w-[230px] justify-between items-end overflow-hidden px-2">{renderBarcode()}</div>
+                     <p className="text-[11px] font-mono font-black mt-3 text-gray-700 tracking-[0.15em] uppercase leading-none inline-block">WKND-{event.id}-00{event.created_by.id}</p>
                   </div>
                </div>
             </div>
-
             <div className="w-full mt-6">
-               <button 
-                  onClick={handleShareAndDownload} 
-                  disabled={isGenerating} 
-                  className="w-full bg-[#06C755] text-white font-black py-4 rounded-2xl shadow-lg flex justify-center items-center gap-2 hover:bg-green-600 transition transform active:scale-95"
-               >
+               <button onClick={handleShareAndDownload} disabled={isGenerating} className="w-full bg-[#06C755] text-white font-black py-4 rounded-2xl shadow-lg flex justify-center items-center gap-2 hover:bg-green-600 transition transform active:scale-95">
                   {isGenerating ? 'กำลังสร้างตั๋วสุดคิ้วท์...' : '📸 เซฟรูป และ คัดลอกลิงก์'}
                </button>
             </div>
-
           </div>
         </div>
       );
     }
 
-    // --- Components ---
     function LoginForm({ users, onLogin, onBack }) {
       const [username, setUsername] = useState('');
       const [pin, setPin] = useState('');
@@ -507,7 +415,6 @@
           <form onSubmit={handleSubmit} className="space-y-5">
             {error && <div className="bg-red-50 text-red-500 p-3 rounded-xl text-sm text-center font-bold">{error}</div>}
             <input type="text" required value={username} onChange={e => setUsername(e.target.value)} placeholder="Username" className="w-full bg-gray-50 p-4 rounded-2xl outline-none focus:ring-2 ring-purple-300" />
-            {/* 🛠️ แก้ไขช่อง PIN หน้า Login ให้ใช้ฟอนต์และสไตล์เดียวกับช่อง Username ปกติ */}
             <input type="password" inputMode="numeric" required maxLength="5" value={pin} onChange={e => setPin(e.target.value.replace(/[^0-9]/g, ''))} placeholder="PIN 5 หลัก" className="w-full bg-gray-50 p-4 rounded-2xl outline-none focus:ring-2 ring-purple-300 font-bold" />
             <button type="submit" className="w-full bg-purple-500 text-white rounded-2xl py-4 font-bold text-lg shadow-lg">เข้าสู่ระบบ 🚀</button>
           </form>
@@ -527,11 +434,8 @@
       useEffect(() => {
         if (isRegister && username.length > 0) {
           const isTaken = users.some(u => u.username.toLowerCase() === username.toLowerCase());
-          if (isTaken) {
-            setError('Username นี้มีคนใช้แล้วครับ ⚠️');
-          } else if (error.includes('Username')) {
-            setError(''); 
-          }
+          if (isTaken) { setError('Username นี้มีคนใช้แล้วครับ ⚠️'); } 
+          else if (error.includes('Username')) { setError(''); }
         }
       }, [username, isRegister, users, error]);
 
@@ -542,7 +446,6 @@
 
       const handleSubmit = async (e) => {
         e.preventDefault(); setError('');
-        
         const cleanPhone = phone.replace(/[^0-9]/g, '');
         if (cleanPhone.length !== 10) return setError('กรุณากรอกเบอร์โทรศัพท์ให้ครบ 10 หลักนะ 📞');
 
@@ -552,44 +455,15 @@
         }
 
         const finalHouse = houseMode === 'existing' ? selectedHouse : newHouse;
-        
         if(name && emoji && cleanPhone && finalHouse && username && pin) {
-            const userData = {
-               username, 
-               pin, 
-               name, 
-               phone: cleanPhone, 
-               emoji, 
-               house: finalHouse 
-            };
-
+            const userData = { username, pin, name, phone: cleanPhone, emoji, house: finalHouse };
             if (currentUser) {
-               const { data, error } = await supabaseApp
-                  .from('users')
-                  .update(userData)
-                  .eq('id', currentUser.id)
-                  .select();
-
-               if (error) {
-                  console.error(error);
-                  alert('อัปเดตข้อมูลไม่สำเร็จ');
-               } else {
-                  onSave(data[0]); 
-               }
+               const { data, error } = await supabaseApp.from('users').update(userData).eq('id', currentUser.id).select();
+               if (!error) onSave(data[0]); 
             } else {
                userData.title = MOCK_TITLES[Math.floor(Math.random() * MOCK_TITLES.length)];
-               
-               const { data, error } = await supabaseApp
-                  .from('users')
-                  .insert([userData])
-                  .select();
-
-               if (error) {
-                  console.error(error);
-                  alert('สมัครสมาชิกไม่สำเร็จ (Username อาจซ้ำกับในระบบ)');
-               } else {
-                  onSave(data[0]); 
-               }
+               const { data, error } = await supabaseApp.from('users').insert([userData]).select();
+               if (!error) onSave(data[0]); 
             }
         }
       };
@@ -603,7 +477,6 @@
             {isRegister && (
                <div className="bg-purple-50 p-4 rounded-2xl space-y-3">
                   <input type="text" required value={username} onChange={e => setUsername(e.target.value.replace(/[^a-zA-Z0-9_]/g, ''))} placeholder="Username (ห้ามซ้ำ)" className="w-full bg-white p-3 rounded-xl outline-none" />
-                  {/* 🛠️ แก้ไขช่อง PIN หน้า Register ให้ใช้ฟอนต์ปกติไม่เว้นช่องไฟห่าง */}
                   <input type="password" inputMode="numeric" required maxLength="5" value={pin} onChange={e => setPin(e.target.value.replace(/[^0-9]/g, ''))} placeholder="PIN 5 หลัก" className="w-full bg-white p-3 rounded-xl outline-none font-bold" />
                </div>
             )}
@@ -637,7 +510,6 @@
       const handleReact = async (emoji) => {
         const newReacts = {...(event.reactions || {})}; 
         newReacts[emoji] = (newReacts[emoji] || 0) + 1; 
-        
         setEvents(prev => prev.map(e => e.id === event.id ? { ...e, reactions: newReacts } : e));
         await supabaseApp.from('events').update({ reactions: newReacts }).eq('id', event.id);
       };
@@ -650,7 +522,6 @@
           } 
           return o; 
         });
-
         setEvents(prev => prev.map(e => e.id === event.id ? { ...e, options: newOptions } : e));
         await supabaseApp.from('events').update({ options: newOptions }).eq('id', event.id);
       };
@@ -662,9 +533,7 @@
                if (vId === currentUser.id) return currentUser; 
                return { id: vId, name: 'เพื่อนในแก๊ง', emoji: '🧑‍💻' }; 
            });
-           
            const updateData = { status: 'approved', final_option: optId, participants, cars: [] };
-
            setEvents(prev => prev.map(e => e.id === event.id ? { ...e, ...updateData } : e));
            await supabaseApp.from('events').update(updateData).eq('id', event.id);
         }
@@ -725,7 +594,6 @@
 
     function ApprovedCard({ event, currentUser, setEvents, onShare }) {
       const finalOpt = event.options.find(o => o.id === event.final_option);
-      const isCreator = event.created_by.id === currentUser.id;
       const cars = event.cars || [];
       const myCar = cars.find(c => c.driver.id === currentUser.id);
       const amIPassenger = cars.some(c => c.passengers.some(p => p.id === currentUser.id));
@@ -887,7 +755,7 @@
                 <p className="text-sm font-bold text-gray-700">ผลโหวต</p>
                 {event.options.map(opt => (
                   <div key={opt.id} className="flex justify-between items-center p-3 rounded-xl border border-gray-100 bg-gray-50">
-                    <span className="text-sm font-medium">{opt.date} {event.final_option === opt.id && '✅'}</span>
+                    <span className="text-sm font-medium">{opt.date} • {opt.time} น. {event.final_option === opt.id && '✅'}</span>
                     <span className="text-xs font-bold text-gray-500">{opt.votes.length} 🙋🏻‍♂️</span>
                   </div>
                 ))}
@@ -933,6 +801,8 @@
       const [location, setLocation] = useState(initialData?.location || '');
       const [mapUrl, setMapUrl] = useState(initialData?.map_url || '');
       const [refLinks, setRefLinks] = useState(initialData?.ref_links?.length ? initialData.ref_links : ['']);
+      
+      // รองรับช่องกรอกเวลาคู่กับวันที่
       const [options, setOptions] = useState(initialData?.options || [{ id: Date.now(), date: '', time: '08:00', votes: [] }]);
 
       const addRefLink = () => setRefLinks([...refLinks, '']);
@@ -941,7 +811,6 @@
 
       const handleSubmit = async (e) => {
         e.preventDefault();
-        
         const eventData = { 
            icon: icon || '✨', 
            title: title, 
@@ -957,30 +826,15 @@
         };
 
         if (initialData) {
-           const { data, error } = await supabaseApp
-              .from('events')
-              .update(eventData)
-              .eq('id', initialData.id) 
-              .select();
-              
-           if (error) {
-              console.error(error);
-              alert("บันทึกการแก้ไขไม่สำเร็จ!");
-           } else {
+           const { data, error } = await supabaseApp.from('events').update(eventData).eq('id', initialData.id).select();
+           if (!error) {
               const updatedEvent = { ...data[0], created_by: currentUser };
               setEvents(prev => prev.map(ev => ev.id === initialData.id ? updatedEvent : ev));
               onClose();
            }
         } else {
-           const { data, error } = await supabaseApp
-              .from('events')
-              .insert([eventData])
-              .select();
-              
-           if (error) {
-              console.error(error);
-              alert("สร้างกิจกรรมไม่สำเร็จ!");
-           } else {
+           const { data, error } = await supabaseApp.from('events').insert([eventData]).select();
+           if (!error) {
               const newEvent = { ...data[0], created_by: currentUser };
               setEvents(prev => [newEvent, ...prev]);
               onClose();
@@ -1014,13 +868,16 @@
               <button type="button" onClick={addRefLink} className="w-full mt-2 py-3 border-2 border-dashed border-gray-200 rounded-2xl text-gray-500 text-sm font-bold hover:bg-gray-50 transition">+ เพิ่มลิงก์</button>
             </div>
             <div className="space-y-3">
-               <p className="font-bold text-sm">📅 วันที่เสนอ</p>
-               {options.map((opt, i) => (
+               <p className="font-bold text-sm">📅 วันและเวลาที่เสนอ</p>
+               {options.map((opt) => (
                   <div key={opt.id} className="flex gap-2">
-                    <input type="date" required value={opt.date} onChange={e => setOptions(options.map(o => o.id === opt.id ? {...o, date: e.target.value} : o))} className="flex-1 bg-gray-50 p-3 rounded-xl text-sm outline-none" />
+                    {/* ช่องเลือกวันที่ */}
+                    <input type="date" required value={opt.date} onChange={e => setOptions(options.map(o => o.id === opt.id ? {...o, date: e.target.value} : o))} className="flex-1 bg-gray-50 p-3 rounded-xl text-sm outline-none border border-gray-200" />
+                    {/* ช่องเลือกเวลา */}
+                    <input type="time" required value={opt.time} onChange={e => setOptions(options.map(o => o.id === opt.id ? {...o, time: e.target.value} : o))} className="w-32 bg-gray-50 p-3 rounded-xl text-sm outline-none border border-gray-200 text-center font-bold" />
                   </div>
                ))}
-               <button type="button" onClick={() => setOptions([...options, { id: Date.now(), date: '', time: '08:00', votes: [] }])} className="text-purple-500 font-bold text-sm">+ เพิ่มวัน</button>
+               <button type="button" onClick={() => setOptions([...options, { id: Date.now(), date: '', time: '08:00', votes: [] }])} className="text-purple-500 font-bold text-sm">+ เพิ่มวันและเวลา</button>
             </div>
             <button type="submit" className="w-full bg-[#a855f7] text-white py-4 rounded-2xl font-bold text-lg mt-8">สร้างเลย! 🚀</button>
           </form>
