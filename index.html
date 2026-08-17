@@ -167,7 +167,7 @@
               {feedTab === 'exploring' && (
                 <div className="space-y-4">
                   {activeEvents.length === 0 ? <EmptyState /> : activeEvents.map(evt => (
-                    <EventCard key={evt.id} event={evt} currentUser={currentUser} setEvents={setEvents} onEdit={() => { setEditingEvent(evt); setView('edit'); }} onShare={() => setShareEvent(evt)} />
+                    <EventCard key={evt.id} event={evt} currentUser={currentUser} users={users} setEvents={setEvents} onEdit={() => { setEditingEvent(evt); setView('edit'); }} onShare={() => setShareEvent(evt)} />
                   ))}
                 </div>
               )}
@@ -465,7 +465,7 @@
       );
     }
 
-    function EventCard({ event, currentUser, setEvents, onEdit, onShare }) {
+    function EventCard({ event, currentUser, users, setEvents, onEdit, onShare }) {
       const [expanded, setExpanded] = useState(false);
       const isCreator = event.created_by.id === currentUser.id;
       const reactionsList = ['🔥', '🍻', '👀', '🚀'];
@@ -492,10 +492,15 @@
       const handleApprove = async (optId) => {
         if(confirm('ยืนยันเคาะวันนี้? ข้อมูลจะถูกส่งไปให้ทุกคนดูนะ!')) {
            const theOpt = event.options.find(o => o.id === optId);
+           
+           // 🛠️ แก้ไข: ดึงข้อมูลชื่อและอีโมจิของเพื่อนจริงๆ จากอาเรย์ users
            const participants = theOpt.votes.map(vId => { 
+               const matchedUser = users.find(u => u.id === vId);
+               if (matchedUser) return matchedUser;
                if (vId === currentUser.id) return currentUser; 
-               return { id: vId, name: 'เพื่อนในแก๊ง', emoji: '🧑‍💻' }; 
+               return { id: vId, name: 'สมาชิกในแก๊ง', emoji: '🧑‍💻' }; 
            });
+
            const updateData = { status: 'approved', final_option: optId, participants, cars: [] };
            setEvents(prev => prev.map(e => e.id === event.id ? { ...e, ...updateData } : e));
            await supabaseApp.from('events').update(updateData).eq('id', event.id);
