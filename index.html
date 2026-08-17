@@ -490,10 +490,9 @@
       };
 
       const handleApprove = async (optId) => {
-        if(confirm('ยืนยันเคาะวันนี้? ข้อมูลจะถูกบันทึกลงระบบและส่งไปให้ทุกคนดูนะ!')) {
+        if(confirm('ยืนยันเคาะวันนี้?')) {
            const theOpt = event.options.find(o => o.id === optId);
            
-           // ดึงรายชื่อสมาชิกที่โหวต
            const participants = theOpt.votes.map(vId => { 
                const matchedUser = users.find(u => u.id === vId);
                if (matchedUser) return matchedUser;
@@ -501,7 +500,6 @@
                return { id: vId, name: currentUser.name, emoji: currentUser.emoji }; 
            });
 
-           // 🛠️ ส่งเฉพาะข้อมูลดิบที่ตรงกับโครงสร้างตาราง events ใน Supabase
            const updateData = { 
               status: 'approved', 
               final_option: optId, 
@@ -509,25 +507,19 @@
               cars: event.cars || [] 
            };
 
-           // สั่งอัปเดตไปที่ Supabase
+           // 🔍 เพิ่มตรงนี้: พิมพ์ Error ลงหน้าจอแจ้งเตือนให้เห็นชัดๆ เลย
            const { data, error } = await supabaseApp
               .from('events')
               .update(updateData)
               .eq('id', event.id)
-              .select(); // เอาแบบดึงข้อมูลกลับมาธรรมดาก่อน
+              .select();
 
            if (error) {
-              console.error("Supabase Error:", error);
-              alert('บันทึกการเคาะไม่สำเร็จ: ' + error.message);
-           } else if (data && data.length > 0) {
-              // ประกอบร่างข้อมูล created_by กลับเข้าไปให้ครบถ้วนฝั่งหน้าจอแสดงผล
-              const approvedUpdatedEvent = { 
-                 ...data[0], 
-                 created_by: event.created_by // ใช้ข้อมูลผู้สร้างเดิมที่มีอยู่แล้วบนหน้าจอ
-              };
-              
-              setEvents(prev => prev.map(e => e.id === event.id ? approvedUpdatedEvent : e));
-              alert('✅ เคาะวันสำเร็จ บันทึกลงฐานข้อมูลเรียบร้อย!');
+              console.error("Supabase Error Detail:", error);
+              alert('Supabase Error: ' + error.message + ' (Details: ' + (error.details || 'none') + ')');
+           } else {
+              setEvents(prev => prev.map(e => e.id === event.id ? { ...e, ...updateData } : e));
+              alert('✅ เคาะวันสำเร็จแล้วครับ!');
            }
         }
       };
