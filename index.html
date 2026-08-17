@@ -489,7 +489,7 @@
         await supabaseApp.from('events').update({ options: newOptions }).eq('id', event.id);
       };
 
-      const handleApprove = async (optId) => {
+     const handleApprove = async (optId) => {
         if(confirm('ยืนยันเคาะวันนี้?')) {
            const theOpt = event.options.find(o => o.id === optId);
            
@@ -500,15 +500,14 @@
                return { id: vId, name: 'Member', emoji: '👤' }; 
            });
 
-           // บังคับแปลงประเภทข้อมูลให้เป็นรูปแบบที่ Postgres/Supabase รองรับชัวร์ๆ
+           // 🛠️ ส่ง final_option เป็น String (ข้อความ) เพื่อป้องกันปัญหาตัวเลขเกินขีดจำกัด Integer
            const updateData = { 
               status: 'approved', 
-              final_option: parseInt(optId, 10), 
+              final_option: String(optId), 
               participants: participants, 
               cars: Array.isArray(event.cars) ? event.cars : [] 
            };
 
-           // แปลง event.id ให้เป็นตัวเลข Integer ป้องกันปัญหา 400 Bad Request
            const targetId = parseInt(event.id, 10);
 
            const { data, error } = await supabaseApp
@@ -518,8 +517,8 @@
               .select();
 
            if (error) {
-              console.error("Supabase Error 400 Detail:", error);
-              alert('บันทึกไม่สำเร็จ (Error 400): ' + error.message);
+              console.error("Supabase Error:", error);
+              alert('Supabase Error: ' + error.message);
            } else {
               setEvents(prev => prev.map(e => e.id === event.id ? { ...e, ...updateData } : e));
               alert('✅ เคาะวันสำเร็จและบันทึกลง Supabase เรียบร้อย!');
