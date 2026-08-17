@@ -69,7 +69,7 @@
         today.setHours(0,0,0,0); 
 
         if (evt.status === 'approved') {
-           const finalOpt = evt.options?.find(o => o.id === evt.final_option);
+           const finalOpt = evt.options?.[evt.final_option] || evt.options?.find(o => o.id === evt.final_option);
            if (!finalOpt) return false;
            const evtDate = new Date(finalOpt.date);
            evtDate.setHours(23, 59, 59, 999);
@@ -304,6 +304,8 @@
         onClose();
       };
 
+      const finalOptObj = event.options?.[event.final_option] || event.options?.find(o => o.id === event.final_option);
+
       return (
         <div className="fixed inset-0 bg-black/60 z-[100] flex flex-col items-center justify-center p-4 backdrop-blur-sm overflow-y-auto">
           <div className="w-full max-w-sm relative my-auto">
@@ -342,7 +344,7 @@
                      <div className="bg-green-50 px-4 py-3 rounded-2xl border border-green-100 flex items-center justify-center mb-6">
                         <div className="text-[10px] text-green-600 font-bold uppercase mr-2">🗓️ Date:</div>
                         <div className="font-black text-green-800 text-sm">
-                           {event.options?.find(o => o.id === event.final_option)?.date} • {event.options?.find(o => o.id === event.final_option)?.time} น.
+                           {finalOptObj?.date} • {finalOptObj?.time} น.
                         </div>
                      </div>
                   )}
@@ -489,9 +491,10 @@
         await supabaseApp.from('events').update({ options: newOptions }).eq('id', event.id);
       };
 
-     const handleApprove = async (optId) => {
+      const handleApprove = async (optId) => {
         if(confirm('ยืนยันเคาะวันนี้?')) {
-           const theOpt = event.options.find(o => o.id === optId);
+           const optIndex = event.options.findIndex(o => o.id === optId);
+           const theOpt = event.options[optIndex];
            
            const participants = theOpt.votes.map(vId => { 
                const matchedUser = users.find(u => u.id === vId);
@@ -500,25 +503,22 @@
                return { id: vId, name: 'Member', emoji: '👤' }; 
            });
 
-           // 🛠️ ส่ง final_option เป็น String (ข้อความ) เพื่อป้องกันปัญหาตัวเลขเกินขีดจำกัด Integer
+           // บันทึก final_option เป็น Index (ตัวเลข 0, 1, 2...) ซึ่งเข้ากันได้ดีกับ int4 ของ Supabase 100%
            const updateData = { 
               status: 'approved', 
-              final_option: String(optId), 
+              final_option: optIndex, 
               participants: participants, 
               cars: Array.isArray(event.cars) ? event.cars : [] 
            };
 
-           const targetId = parseInt(event.id, 10);
-
-           const { data, error } = await supabaseApp
+           const { error } = await supabaseApp
               .from('events')
               .update(updateData)
-              .eq('id', targetId)
-              .select();
+              .eq('id', parseInt(event.id, 10));
 
            if (error) {
               console.error("Supabase Error:", error);
-              alert('Supabase Error: ' + error.message);
+              alert('บันทึกไม่สำเร็จ: ' + error.message);
            } else {
               setEvents(prev => prev.map(e => e.id === event.id ? { ...e, ...updateData } : e));
               alert('✅ เคาะวันสำเร็จและบันทึกลง Supabase เรียบร้อย!');
@@ -580,7 +580,7 @@
     }
 
     function ApprovedCard({ event, currentUser, users, setEvents, onShare }) {
-      const finalOpt = event.options?.find(o => o.id === event.final_option);
+      const finalOpt = event.options?.[event.final_option] || event.options?.find(o => o.id === event.final_option);
       const cars = event.cars || [];
       const myCar = cars.find(c => c.driver.id === currentUser.id);
       const amIPassenger = cars.some(c => c.passengers.some(p => p.id === currentUser.id));
@@ -623,7 +623,6 @@
          supabaseApp.from('events').update({ cars: updatedCars }).eq('id', event.id);
       };
 
-      // 🛠️ ตรวจสอบรายชื่อผู้ร่วมทริป ให้แมทช์กับข้อมูลล่าสุดจากฐานข้อมูล users เสมอ
       const participantsList = (event.participants || []).map(p => {
          const found = users.find(u => u.id === p.id);
          return found ? found : p;
@@ -670,7 +669,6 @@
              {showCarForm && (
                 <div className="bg-blue-50 p-3 rounded-2xl mb-3 flex gap-2 items-center border border-blue-100">
                    <span className="text-xs font-bold text-blue-700">รับเพื่อนได้:</span>
-                   {/* 🛠️ ปรับตัวเลือกจำนวนที่นั่งเริ่มตั้งแต่ 0 ถึง 10 คน */}
                    <select value={newCarSeats} onChange={e => setNewCarSeats(e.target.value)} className="p-1.5 rounded-lg text-sm outline-none border border-blue-200 bg-white font-medium text-gray-700">
                       <option value="0">0 ที่นั่ง (ไปคนเดียว)</option>
                       <option value="1">1 ที่นั่ง</option>
@@ -771,9 +769,9 @@
               )}
               <div className="space-y-2">
                 <p className="text-sm font-bold text-gray-700">ผลโหวต</p>
-                {event.options?.map(opt => (
+                {event.options?.map((opt, idx) => (
                   <div key={opt.id} className="flex justify-between items-center p-3 rounded-xl border border-gray-100 bg-gray-50">
-                    <span className="text-sm font-medium">{opt.date} • {opt.time} น. {event.final_option === opt.id && '✅'}</span>
+                    <span className="text-sm font-medium">{opt.date} • {opt.time} น. {(event.final_option === idx || event.final_option === opt.id) && '✅'}</span>
                     <span className="text-xs font-bold text-gray-500">{opt.votes?.length || 0} 🙋🏻‍♂️</span>
                   </div>
                 ))}
@@ -819,7 +817,8 @@
       const [location, setLocation] = useState(initialData?.location || '');
       const [mapUrl, setMapUrl] = useState(initialData?.map_url || '');
       const [refLinks, setRefLinks] = useState(initialData?.ref_links?.length ? initialData.ref_links : ['']);
-      const [options, setOptions] = useState(initialData?.options || [{ id: Date.now(), date: '', time: '08:00', votes: [] }]);
+      // ใช้เลขสุ่ม 5 หลัก ป้องกันปัญหา integer overflow
+      const [options, setOptions] = useState(initialData?.options || [{ id: Math.floor(Math.random() * 90000) + 10000, date: '', time: '08:00', votes: [] }]);
 
       const addRefLink = () => setRefLinks([...refLinks, '']);
       const updateRefLink = (index, value) => { const newLinks = [...refLinks]; newLinks[index] = value; setRefLinks(newLinks); };
@@ -889,7 +888,7 @@
                     <input type="time" required value={opt.time} onChange={e => setOptions(options.map(o => o.id === opt.id ? {...o, time: e.target.value} : o))} className="w-32 bg-gray-50 p-3 rounded-xl text-sm outline-none border border-gray-200 text-center font-bold" />
                   </div>
                ))}
-               <button type="button" onClick={() => setOptions([...options, { id: Date.now(), date: '', time: '08:00', votes: [] }])} className="text-purple-500 font-bold text-sm">+ เพิ่มวันและเวลา</button>
+               <button type="button" onClick={() => setOptions([...options, { id: Math.floor(Math.random() * 90000) + 10000, date: '', time: '08:00', votes: [] }])} className="text-purple-500 font-bold text-sm">+ เพิ่มวันและเวลา</button>
             </div>
             <button type="submit" className="w-full bg-[#a855f7] text-white py-4 rounded-2xl font-bold text-lg mt-8">สร้างเลย! 🚀</button>
           </form>
