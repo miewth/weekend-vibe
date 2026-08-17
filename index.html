@@ -490,10 +490,10 @@
       };
 
       const handleApprove = async (optId) => {
-        if(confirm('ยืนยันเคาะวันนี้? ข้อมูลจะถูกส่งไปให้ทุกคนดูนะ!')) {
+        if(confirm('ยืนยันเคาะวันนี้? ข้อมูลจะถูกบันทึกลงระบบและส่งไปให้ทุกคนดูนะ!')) {
            const theOpt = event.options.find(o => o.id === optId);
            
-           // 🛠️ แก้ไข: ดึงข้อมูลชื่อและอีโมจิของเพื่อนจริงๆ จากอาเรย์ users
+           // ดึงรายชื่อสมาชิกที่โหวต
            const participants = theOpt.votes.map(vId => { 
                const matchedUser = users.find(u => u.id === vId);
                if (matchedUser) return matchedUser;
@@ -501,9 +501,28 @@
                return { id: vId, name: currentUser.name, emoji: currentUser.emoji }; 
            });
 
-           const updateData = { status: 'approved', final_option: optId, participants, cars: [] };
-           setEvents(prev => prev.map(e => e.id === event.id ? { ...e, ...updateData } : e));
-           await supabaseApp.from('events').update(updateData).eq('id', event.id);
+           const updateData = { 
+              status: 'approved', 
+              final_option: optId, 
+              participants: participants, 
+              cars: event.cars || [] 
+           };
+
+           // 🛠️ สั่งอัปเดตตรงไปที่ Supabase ทันทีและรอผลลัพธ์
+           const { data, error } = await supabaseApp
+              .from('events')
+              .update(updateData)
+              .eq('id', event.id)
+              .select('*, created_by:users(*)');
+
+           if (error) {
+              console.error(error);
+              alert('บันทึกการเคาะไม่สำเร็จ กรุณาลองใหม่อีกครั้ง!');
+           } else if (data && data.length > 0) {
+              // อัปเดต State หน้าจอด้วยข้อมูลจริงที่กลับมาจาก Supabase
+              setEvents(prev => prev.map(e => e.id === event.id ? data[0] : e));
+              alert('✅ เคาะวันสำเร็จ บันทึกลงฐานข้อมูลเรียบร้อย!');
+           }
         }
       };
 
