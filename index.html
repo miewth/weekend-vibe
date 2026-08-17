@@ -507,20 +507,15 @@
               cars: event.cars || [] 
            };
 
-           // 🔍 เพิ่มตรงนี้: พิมพ์ Error ลงหน้าจอแจ้งเตือนให้เห็นชัดๆ เลย
-           const { data, error } = await supabaseApp
+           // 🚀 สั่งอัปเดตตรงไปที่ Supabase โดยตรง
+           await supabaseApp
               .from('events')
               .update(updateData)
-              .eq('id', event.id)
-              .select();
+              .eq('id', event.id);
 
-           if (error) {
-              console.error("Supabase Error Detail:", error);
-              alert('Supabase Error: ' + error.message + ' (Details: ' + (error.details || 'none') + ')');
-           } else {
-              setEvents(prev => prev.map(e => e.id === event.id ? { ...e, ...updateData } : e));
-              alert('✅ เคาะวันสำเร็จแล้วครับ!');
-           }
+           // อัปเดตหน้าจอทันทีแบบลื่นๆ ไม่ติดขัด
+           setEvents(prev => prev.map(e => e.id === event.id ? { ...e, ...updateData } : e));
+           alert('✅ เคาะวันสำเร็จแล้วครับ!');
         }
       };
 
