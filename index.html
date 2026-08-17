@@ -495,35 +495,55 @@
         if(confirm('ยืนยันเคาะวันนี้?')) {
            const optIndex = event.options.findIndex(o => o.id === optId);
            const theOpt = event.options[optIndex];
-           
-           const participants = theOpt.votes.map(vId => { 
+
+           const participants = theOpt.votes.map(vId => {
                const matchedUser = users.find(u => u.id === vId);
                if (matchedUser) return { id: matchedUser.id, name: matchedUser.name, emoji: matchedUser.emoji };
-               if (vId === currentUser.id) return { id: currentUser.id, name: currentUser.name, emoji: currentUser.emoji }; 
-               return { id: vId, name: 'Member', emoji: '👤' }; 
+               if (vId === currentUser.id) return { id: currentUser.id, name: currentUser.name, emoji: currentUser.emoji };
+               return { id: vId, name: 'Member', emoji: '👤' };
            });
 
-           // บันทึก final_option เป็น Index (ตัวเลข 0, 1, 2...) ซึ่งเข้ากันได้ดีกับ int4 ของ Supabase 100%
-           const updateData = { 
-              status: 'approved', 
-              final_option: optIndex, 
-              participants: participants, 
-              cars: Array.isArray(event.cars) ? event.cars : [] 
+           const updateData = {
+              status: 'approved',
+              final_option: optIndex,
+              participants: participants,
+              cars: Array.isArray(event.cars) ? event.cars : []
            };
 
-           const { error } = await supabaseApp
+           // ใช้ .select() เพื่อยืนยันว่ามีแถวถูกอัปเดตจริง (ถ้า RLS บล็อก จะได้ 0 แถวโดยไม่มี error)
+           const { data, error } = await supabaseApp
               .from('events')
               .update(updateData)
-              .eq('id', parseInt(event.id, 10));
+              .eq('id', event.id)
+              .select('id, status, final_option');
 
            if (error) {
               console.error("Supabase Error:", error);
               alert('บันทึกไม่สำเร็จ: ' + error.message);
-           } else {
-              setEvents(prev => prev.map(e => e.id === event.id ? { ...e, ...updateData } : e));
-              alert('✅ เคาะวันสำเร็จและบันทึกลง Supabase เรียบร้อย!');
+              return;
            }
+           if (!data || data.length === 0) {
+              alert('⚠️ อัปเดตไม่สำเร็จ: ฐานข้อมูลไม่ยอมให้แก้ไขแถวนี้ (RLS/Policy ของตาราง events ยังไม่อนุญาต UPDATE) กรุณาเพิ่ม Policy UPDATE ให้ตาราง events');
+              return;
+           }
+           setEvents(prev => prev.map(e => e.id === event.id ? { ...e, ...updateData } : e));
+           alert('✅ เคาะวันสำเร็จและบันทึกลง Supabase เรียบร้อย!');
         }
+      };
+
+      const handleCancelEvent = async () => {
+        if(!confirm('ยืนยันยกเลิกกิจกรรมนี้?')) return;
+        const { data, error } = await supabaseApp
+           .from('events')
+           .update({ status: 'cancelled' })
+           .eq('id', event.id)
+           .select('id, status');
+        if (error) { alert('ยกเลิกไม่สำเร็จ: ' + error.message); return; }
+        if (!data || data.length === 0) {
+           alert('⚠️ ยกเลิกไม่สำเร็จ: ตาราง events ยังไม่อนุญาตให้ UPDATE (ตรวจสอบ RLS Policy)');
+           return;
+        }
+        setEvents(prev => prev.map(e => e.id === event.id ? { ...e, status: 'cancelled' } : e));
       };
 
       return (
@@ -569,7 +589,7 @@
               {isCreator && (
                 <div className="flex gap-2">
                   <button onClick={onEdit} className="flex-1 border-2 border-purple-200 text-purple-600 font-bold py-2 rounded-2xl">✏️ แก้ไข</button>
-                  <button onClick={() => setEvents(prev => prev.map(e => e.id === event.id ? { ...e, status: 'cancelled' } : e))} className="flex-1 border-2 border-red-100 text-red-500 font-bold py-2 rounded-2xl">❌ ยกเลิก</button>
+                  <button onClick={handleCancelEvent} className="flex-1 border-2 border-red-100 text-red-500 font-bold py-2 rounded-2xl">❌ ยกเลิก</button>
                 </div>
               )}
               <button onClick={() => setExpanded(false)} className="w-full text-gray-400 text-sm font-medium py-2">^ ปิดรายละเอียด</button>
