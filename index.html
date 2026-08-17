@@ -28,7 +28,6 @@
 <script type="text/babel">
     const { useState, useEffect, useRef } = React;
 
-    // --- เชื่อมต่อ Supabase ---
     const { createClient } = supabase;
     const supabaseUrl = 'https://yifaesmogvggvzsfkcwr.supabase.co'; 
     const supabaseKey = 'sb_publishable_3AJO1MhySIrtl1ZvBQTcTw_F3PjUpRI'; 
@@ -73,14 +72,14 @@
            const finalOpt = evt.options.find(o => o.id === evt.final_option);
            if (!finalOpt) return false;
            const evtDate = new Date(finalOpt.date);
-           evtDate.setHours(0,0,0,0);
+           evtDate.setHours(23, 59, 59, 999);
            return evtDate < today; 
         }
         
         if (evt.status === 'exploring') {
            const hasFutureDate = evt.options.some(opt => {
               const optDate = new Date(opt.date);
-              optDate.setHours(0,0,0,0);
+              optDate.setHours(23, 59, 59, 999);
               return optDate >= today;
            });
            return !hasFutureDate;
@@ -283,25 +282,8 @@
 
         if (ticketRef.current && window.html2canvas) {
            try {
-              // รอให้ฟอนต์โหลดเสร็จสมบูรณ์ก่อน ป้องกันตัวอักษรขยับ/reflow ตอนแคปเจอร์
-              if (document.fonts && document.fonts.ready) { await document.fonts.ready; }
-              await new Promise(res => setTimeout(res, 300));
-
-              const node = ticketRef.current;
-              // สำคัญ: "ห้าม" บังคับ windowWidth/windowHeight ให้เท่ากับขนาดของตั๋วเอง
-              // เพราะตั๋วอยู่ใน overlay แบบ "fixed inset-0 flex justify-center" ที่คำนวณ
-              // การจัด center จากความกว้างจอจริงทั้งหมด ถ้าเราลดขนาด virtual window ลง
-              // มาเท่าตัวตั๋ว มันจะทำให้ overlay คำนวณ layout ใหม่ผิดเพี้ยนไปจากที่เห็นจริง
-              // (นี่คือสาเหตุที่รูปเซฟก่อนหน้านี้เบี้ยว ไม่ center) ปล่อยให้ html2canvas ใช้
-              // ขนาดจอจริง (window.innerWidth/innerHeight) เหมือนที่ผู้ใช้เห็นตอน popup เป๊ะๆ
-              const canvas = await window.html2canvas(node, {
-                 backgroundColor: '#ffffff',
-                 scale: 3,
-                 useCORS: true,
-                 logging: false,
-                 scrollX: 0,
-                 scrollY: -window.scrollY,
-              });
+              await new Promise(res => setTimeout(res, 500));
+              const canvas = await window.html2canvas(ticketRef.current, { backgroundColor: '#ffffff', scale: 3, useCORS: true, logging: false, windowWidth: 480 });
               const imageURL = canvas.toDataURL("image/jpeg", 0.95);
               const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
               
@@ -326,66 +308,47 @@
         <div className="fixed inset-0 bg-black/60 z-[100] flex flex-col items-center justify-center p-4 backdrop-blur-sm overflow-y-auto">
           <div className="w-full max-w-sm relative my-auto">
             <button onClick={onClose} className="absolute -top-12 right-0 text-white font-bold text-xl bg-white/20 w-10 h-10 rounded-full hover:bg-white/40 transition">✕</button>
-            <div ref={ticketRef} className="w-full bg-white rounded-[20px] overflow-hidden flex flex-col relative text-left" style={{ boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.4)', fontFamily: '"Noto Sans Thai", sans-serif' }}>
-               {/* --- Ticket top ribbon --- */}
-               <div className="relative bg-gradient-to-r from-purple-600 via-fuchsia-600 to-purple-600 px-5 py-3 flex items-center justify-between">
-                  <span className="text-white text-[10px] font-black uppercase tracking-[0.2em] leading-none inline-block">Weekend Vibes</span>
-                  <span className="text-white/80 text-[10px] font-mono font-bold tracking-widest leading-none inline-block">E-TICKET</span>
-               </div>
-
-               {/* --- Main stage --- */}
-               <div className="bg-gradient-to-b from-purple-50 via-white to-white pt-7 pb-6 px-6 text-center relative flex flex-col items-center justify-center">
-                  <div className="w-full flex items-center justify-center mb-3">
-                     <span className={`inline-flex items-center justify-center leading-none text-[10px] font-black uppercase tracking-[0.15em] px-3 py-2 rounded-full border shadow-sm ${event.status === 'approved' ? 'bg-green-500 text-white border-green-500' : 'bg-orange-500 text-white border-orange-500'}`}>
-                        {event.status === 'approved' ? '✅ CONFIRMED' : '🔥 VOTING NOW'}
-                     </span>
+            <div ref={ticketRef} className="w-full bg-white rounded-[24px] overflow-hidden flex flex-col relative text-left" style={{ boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.4)', fontFamily: '"Noto Sans Thai", sans-serif' }}>
+               <div className="bg-gradient-to-br from-purple-100 via-pink-50 to-white pt-10 pb-8 px-6 text-center relative border-b-4 border-transparent flex flex-col items-center justify-center">
+                  <div className="w-full grid grid-cols-3 items-center mb-4">
+                     <div className="flex justify-start"><span className="bg-purple-600 text-white px-3.5 py-1.5 rounded-full text-[10px] font-black uppercase shadow-sm">VIP PASS</span></div>
+                     <div></div>
+                     <div className="flex justify-end"><span className="text-[11px] text-gray-400 font-mono font-bold tracking-wider">NO. 00{event.id}</span></div>
                   </div>
-                  <div className="text-[60px] my-1 leading-none flex items-center justify-center drop-shadow-sm">{event.icon}</div>
-                  <h2 className="text-2xl font-black text-gray-900 px-2 leading-snug" style={{ lineHeight: '1.35' }}>{event.title}</h2>
-                  <p className="text-[11px] font-bold text-purple-400 uppercase tracking-[0.2em] mt-2 leading-none inline-flex items-center justify-center gap-1">Admit One <span>🎟️</span></p>
-               </div>
-
-               {/* --- Perforated tear line with punched notches --- */}
-               <div className="relative w-full py-3 bg-white">
-                  <div className="absolute top-1/2 left-5 right-5 border-t-2 border-dashed border-gray-300 -translate-y-1/2 z-0"></div>
-                  <div className="absolute -left-3 top-1/2 w-6 h-6 rounded-full bg-[#3a3a45] -translate-y-1/2 z-20"></div>
-                  <div className="absolute -right-3 top-1/2 w-6 h-6 rounded-full bg-[#3a3a45] -translate-y-1/2 z-20"></div>
-               </div>
-
-               {/* --- Stub info grid --- */}
-               <div className="px-6 pt-1 pb-6 bg-white">
-                  <div className="grid grid-cols-2 gap-3 mb-4">
-                     <div className="bg-gray-50 px-4 py-3 rounded-2xl border border-gray-100">
-                        <div className="text-[9px] text-purple-500 font-black uppercase tracking-wider leading-none mb-1.5 inline-flex items-center gap-1">📍<span>Venue</span></div>
-                        <div className="font-bold text-gray-800 text-sm leading-snug" style={{ lineHeight: '1.4' }}>{event.location}</div>
-                     </div>
-                     <div className="bg-gray-50 px-4 py-3 rounded-2xl border border-gray-100">
-                        <div className="text-[9px] text-orange-500 font-black uppercase tracking-wider leading-none mb-1.5 inline-flex items-center gap-1">👑<span>Host</span></div>
-                        <div className="font-bold text-gray-800 text-sm leading-snug" style={{ lineHeight: '1.4' }}>{event.created_by.name} {event.created_by.emoji}</div>
+                  <div className="text-[65px] my-2 leading-none flex items-center justify-center">{event.icon}</div>
+                  <h2 className="text-2xl font-black text-gray-800 mb-5 px-3" style={{ lineHeight: '1.4' }}>{event.title}</h2>
+                  <div className="w-full text-center py-1">
+                     <div className={`text-[11px] font-bold py-3 rounded-full uppercase border shadow-sm tracking-wide mx-auto ${event.status === 'approved' ? 'bg-green-50 text-green-600 border-green-200' : 'bg-orange-50 text-orange-600 border-orange-200'}`} style={{ width: '180px', display: 'block', margin: '0 auto', textAlign: 'center' }}>
+                         {event.status === 'approved' ? '✅ CONFIRMED TRIP' : '🔥 VOTING NOW'}
                      </div>
                   </div>
-
-                  {event.status === 'approved' ? (
-                     <div className="bg-green-50 px-4 py-3 rounded-2xl border border-green-100 flex items-center justify-center gap-2 mb-5">
-                        <span className="text-[10px] text-green-600 font-black uppercase tracking-wider leading-none inline-flex items-center gap-1">🗓️<span>Show Date</span></span>
-                        <span className="font-black text-green-800 text-sm leading-none inline-block">
+               </div>
+               <div className="relative w-full flex items-center justify-center py-2 bg-white">
+                  <div className="absolute top-1/2 left-0 w-full border-t-[3px] border-dashed border-gray-300 z-0"></div>
+                  <div className="bg-white px-2 text-gray-400 text-lg z-10 relative leading-none">✂️</div>
+               </div>
+               <div className="px-6 py-6 bg-white">
+                  <div className="flex w-full gap-3 mb-6">
+                     <div className="flex-1 bg-gray-50 px-4 py-4 rounded-2xl border border-gray-100">
+                        <div className="text-[10px] text-purple-500 font-bold uppercase mb-1">📍 Location</div>
+                        <div className="font-bold text-gray-800 text-sm" style={{ lineHeight: '1.4' }}>{event.location}</div>
+                     </div>
+                     <div className="flex-1 bg-gray-50 px-4 py-4 rounded-2xl border border-gray-100">
+                        <div className="text-[10px] text-orange-500 font-bold uppercase mb-1">👑 Host</div>
+                        <div className="font-bold text-gray-800 text-sm" style={{ lineHeight: '1.4' }}>{event.created_by.name} {event.created_by.emoji}</div>
+                     </div>
+                  </div>
+                  {event.status === 'approved' && (
+                     <div className="bg-green-50 px-4 py-3 rounded-2xl border border-green-100 flex items-center justify-center mb-6">
+                        <div className="text-[10px] text-green-600 font-bold uppercase mr-2">🗓️ Date:</div>
+                        <div className="font-black text-green-800 text-sm">
                            {event.options.find(o => o.id === event.final_option)?.date} • {event.options.find(o => o.id === event.final_option)?.time} น.
-                        </span>
-                     </div>
-                  ) : (
-                     <div className="bg-orange-50 px-4 py-3 rounded-2xl border border-orange-100 flex items-center justify-center gap-2 mb-5">
-                        <span className="text-[10px] text-orange-600 font-black uppercase tracking-wider leading-none inline-flex items-center gap-1">🗳️<span>กำลังเปิดโหวตวัน</span></span>
+                        </div>
                      </div>
                   )}
-
-                  <div className="flex items-center justify-between mb-3 px-1">
-                     <span className="text-[9px] text-gray-400 font-black uppercase tracking-widest leading-none inline-block">Seat</span>
-                     <span className="text-[9px] text-gray-400 font-black uppercase tracking-widest leading-none inline-block">General Admission</span>
-                     <span className="text-[9px] text-gray-400 font-black uppercase tracking-widest leading-none inline-block">Ticket No.</span>
-                  </div>
-                  <div className="flex flex-col items-center justify-center border-t-2 border-dashed border-gray-200 pt-4">
-                     <div className="flex h-12 w-full max-w-[230px] justify-between items-end overflow-hidden px-2">{renderBarcode()}</div>
-                     <p className="text-[11px] font-mono font-black mt-3 text-gray-700 tracking-[0.15em] uppercase leading-none inline-block">WKND-{event.id}-00{event.created_by.id}</p>
+                  <div className="flex flex-col items-center justify-center opacity-70 mt-2">
+                     <div className="flex h-12 w-full max-w-[220px] justify-between items-end overflow-hidden px-2">{renderBarcode()}</div>
+                     <p className="text-[10px] font-mono font-bold mt-3 text-gray-500 uppercase">WKND-{event.id}-00{event.created_by.id}</p>
                   </div>
                </div>
             </div>
@@ -801,8 +764,6 @@
       const [location, setLocation] = useState(initialData?.location || '');
       const [mapUrl, setMapUrl] = useState(initialData?.map_url || '');
       const [refLinks, setRefLinks] = useState(initialData?.ref_links?.length ? initialData.ref_links : ['']);
-      
-      // รองรับช่องกรอกเวลาคู่กับวันที่
       const [options, setOptions] = useState(initialData?.options || [{ id: Date.now(), date: '', time: '08:00', votes: [] }]);
 
       const addRefLink = () => setRefLinks([...refLinks, '']);
@@ -871,9 +832,7 @@
                <p className="font-bold text-sm">📅 วันและเวลาที่เสนอ</p>
                {options.map((opt) => (
                   <div key={opt.id} className="flex gap-2">
-                    {/* ช่องเลือกวันที่ */}
                     <input type="date" required value={opt.date} onChange={e => setOptions(options.map(o => o.id === opt.id ? {...o, date: e.target.value} : o))} className="flex-1 bg-gray-50 p-3 rounded-xl text-sm outline-none border border-gray-200" />
-                    {/* ช่องเลือกเวลา */}
                     <input type="time" required value={opt.time} onChange={e => setOptions(options.map(o => o.id === opt.id ? {...o, time: e.target.value} : o))} className="w-32 bg-gray-50 p-3 rounded-xl text-sm outline-none border border-gray-200 text-center font-bold" />
                   </div>
                ))}
