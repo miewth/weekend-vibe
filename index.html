@@ -69,7 +69,7 @@
         today.setHours(0,0,0,0); 
 
         if (evt.status === 'approved') {
-           const finalOpt = evt.options.find(o => o.id === evt.final_option);
+           const finalOpt = evt.options?.find(o => o.id === evt.final_option);
            if (!finalOpt) return false;
            const evtDate = new Date(finalOpt.date);
            evtDate.setHours(23, 59, 59, 999);
@@ -77,7 +77,7 @@
         }
         
         if (evt.status === 'exploring') {
-           const hasFutureDate = evt.options.some(opt => {
+           const hasFutureDate = evt.options?.some(opt => {
               const optDate = new Date(opt.date);
               optDate.setHours(23, 59, 59, 999);
               return optDate >= today;
@@ -175,7 +175,7 @@
               {feedTab === 'approved' && (
                 <div className="space-y-4">
                   {approvedEvents.length === 0 ? <EmptyState /> : approvedEvents.map(evt => (
-                    <ApprovedCard key={evt.id} event={evt} currentUser={currentUser} setEvents={setEvents} onShare={() => setShareEvent(evt)} />
+                    <ApprovedCard key={evt.id} event={evt} currentUser={currentUser} users={users} setEvents={setEvents} onShare={() => setShareEvent(evt)} />
                   ))}
                 </div>
               )}
@@ -335,20 +335,20 @@
                      </div>
                      <div className="flex-1 bg-gray-50 px-4 py-4 rounded-2xl border border-gray-100">
                         <div className="text-[10px] text-orange-500 font-bold uppercase mb-1">👑 Host</div>
-                        <div className="font-bold text-gray-800 text-sm" style={{ lineHeight: '1.4' }}>{event.created_by.name} {event.created_by.emoji}</div>
+                        <div className="font-bold text-gray-800 text-sm" style={{ lineHeight: '1.4' }}>{event.created_by?.name || 'Admin'} {event.created_by?.emoji || '👑'}</div>
                      </div>
                   </div>
                   {event.status === 'approved' && (
                      <div className="bg-green-50 px-4 py-3 rounded-2xl border border-green-100 flex items-center justify-center mb-6">
                         <div className="text-[10px] text-green-600 font-bold uppercase mr-2">🗓️ Date:</div>
                         <div className="font-black text-green-800 text-sm">
-                           {event.options.find(o => o.id === event.final_option)?.date} • {event.options.find(o => o.id === event.final_option)?.time} น.
+                           {event.options?.find(o => o.id === event.final_option)?.date} • {event.options?.find(o => o.id === event.final_option)?.time} น.
                         </div>
                      </div>
                   )}
                   <div className="flex flex-col items-center justify-center opacity-70 mt-2">
                      <div className="flex h-12 w-full max-w-[220px] justify-between items-end overflow-hidden px-2">{renderBarcode()}</div>
-                     <p className="text-[10px] font-mono font-bold mt-3 text-gray-500 uppercase">WKND-{event.id}-00{event.created_by.id}</p>
+                     <p className="text-[10px] font-mono font-bold mt-3 text-gray-500 uppercase">WKND-{event.id}-00{event.created_by?.id || 1}</p>
                   </div>
                </div>
             </div>
@@ -467,7 +467,7 @@
 
     function EventCard({ event, currentUser, users, setEvents, onEdit, onShare }) {
       const [expanded, setExpanded] = useState(false);
-      const isCreator = event.created_by.id === currentUser.id;
+      const isCreator = event.created_by?.id === currentUser.id;
       const reactionsList = ['🔥', '🍻', '👀', '🚀'];
 
       const handleReact = async (emoji) => {
@@ -498,7 +498,7 @@
                const matchedUser = users.find(u => u.id === vId);
                if (matchedUser) return matchedUser;
                if (vId === currentUser.id) return currentUser; 
-               return { id: vId, name: 'สมาชิกในแก๊ง', emoji: '🧑‍💻' }; 
+               return { id: vId, name: currentUser.name, emoji: currentUser.emoji }; 
            });
 
            const updateData = { status: 'approved', final_option: optId, participants, cars: [] };
@@ -515,7 +515,7 @@
             <div className="flex-1 pr-6">
               <h3 className="font-bold text-lg text-gray-900 leading-tight">{event.title}</h3>
               <p className="text-sm text-gray-500 mt-1">📍 {event.location}</p>
-              <p className="text-xs text-gray-400 mt-1 flex items-center gap-1">สร้างโดย {event.created_by.emoji} {event.created_by.name}</p>
+              <p className="text-xs text-gray-400 mt-1 flex items-center gap-1">สร้างโดย {event.created_by?.emoji || '👑'} {event.created_by?.name || 'Admin'}</p>
             </div>
           </div>
           {!expanded ? (
@@ -528,7 +528,7 @@
               </div>
               <div className="space-y-2">
                 <p className="text-sm font-bold text-gray-700">เลือกวันที่สะดวก</p>
-                {event.options.map(opt => {
+                {event.options?.map(opt => {
                   const isVoted = opt.votes.includes(currentUser.id);
                   return (
                     <div key={opt.id} onClick={() => toggleVote(opt.id)} className={`flex justify-between items-center p-4 rounded-2xl cursor-pointer border-2 transition-all ${isVoted ? 'border-green-400 bg-green-50' : 'border-gray-100 bg-white'}`}>
@@ -560,8 +560,8 @@
       );
     }
 
-    function ApprovedCard({ event, currentUser, setEvents, onShare }) {
-      const finalOpt = event.options.find(o => o.id === event.final_option);
+    function ApprovedCard({ event, currentUser, users, setEvents, onShare }) {
+      const finalOpt = event.options?.find(o => o.id === event.final_option);
       const cars = event.cars || [];
       const myCar = cars.find(c => c.driver.id === currentUser.id);
       const amIPassenger = cars.some(c => c.passengers.some(p => p.id === currentUser.id));
@@ -573,25 +573,42 @@
       const handleAddCar = () => {
          const newCar = { id: Date.now().toString(), driver: currentUser, max_seats: parseInt(newCarSeats), passengers: [] };
          setEvents(prev => prev.map(e => e.id === event.id ? {...e, cars: [...cars, newCar]} : e));
+         supabaseApp.from('events').update({ cars: [...cars, newCar] }).eq('id', event.id);
          setShowCarForm(false);
       };
       const handleRemoveCar = (carId) => {
-         if(confirm('แน่ใจหรือไม่ว่าต้องการยกเลิกรถคันนี้?')) setEvents(prev => prev.map(e => e.id === event.id ? {...e, cars: e.cars.filter(c => c.id !== carId)} : e));
+         if(confirm('แน่ใจหรือไม่ว่าต้องการยกเลิกรถคันนี้?')) {
+           const updatedCars = cars.filter(c => c.id !== carId);
+           setEvents(prev => prev.map(e => e.id === event.id ? {...e, cars: updatedCars} : e));
+           supabaseApp.from('events').update({ cars: updatedCars }).eq('id', event.id);
+         }
       };
       const handleJoinCar = (carId) => {
-         setEvents(prev => prev.map(e => {
-            if(e.id !== event.id) return e;
-            const updatedCars = e.cars.map(c => { if(c.id === carId && c.passengers.length < c.max_seats) return {...c, passengers: [...c.passengers, currentUser]}; return c; });
-            return {...e, cars: updatedCars};
-         }));
+         const updatedCars = cars.map(c => { 
+           if(c.id === carId && c.passengers.length < c.max_seats) {
+             return {...c, passengers: [...c.passengers, currentUser]}; 
+           } 
+           return c; 
+         });
+         setEvents(prev => prev.map(e => e.id === event.id ? {...e, cars: updatedCars} : e));
+         supabaseApp.from('events').update({ cars: updatedCars }).eq('id', event.id);
       };
       const handleLeaveCar = (carId) => {
-         setEvents(prev => prev.map(e => {
-            if(e.id !== event.id) return e;
-            const updatedCars = e.cars.map(c => { if(c.id === carId) return {...c, passengers: c.passengers.filter(p => p.id !== currentUser.id)}; return c; });
-            return {...e, cars: updatedCars};
-         }));
+         const updatedCars = cars.map(c => { 
+           if(c.id === carId) {
+             return {...c, passengers: c.passengers.filter(p => p.id !== currentUser.id)}; 
+           } 
+           return c; 
+         });
+         setEvents(prev => prev.map(e => e.id === event.id ? {...e, cars: updatedCars} : e));
+         supabaseApp.from('events').update({ cars: updatedCars }).eq('id', event.id);
       };
+
+      // 🛠️ ตรวจสอบรายชื่อผู้ร่วมทริป ให้แมทช์กับข้อมูลล่าสุดจากฐานข้อมูล users เสมอ
+      const participantsList = (event.participants || []).map(p => {
+         const found = users.find(u => u.id === p.id);
+         return found ? found : p;
+      });
 
       return (
         <div className="bg-white p-5 rounded-3xl shadow-sm border-2 border-green-100 relative mb-4">
@@ -601,7 +618,7 @@
              <div className="text-4xl">{event.icon}</div>
              <div>
                 <h3 className="font-bold text-lg text-gray-900">{event.title}</h3>
-                <p className="text-sm text-gray-600 font-medium mt-1">🗓️ {finalOpt.date} • {finalOpt.time} น.</p>
+                <p className="text-sm text-gray-600 font-medium mt-1">🗓️ {finalOpt?.date} • {finalOpt?.time} น.</p>
                 <p className="text-sm text-gray-500 mt-1">📍 {event.location}</p>
              </div>
           </div>
@@ -609,18 +626,18 @@
           <div className="bg-gray-50 rounded-2xl p-3 mb-4 border border-gray-100">
              <div className="flex justify-between items-center cursor-pointer select-none" onClick={() => setShowMembers(!showMembers)}>
                <div className="flex -space-x-2">
-                 {event.participants.slice(0, 5).map((p, index) => <div key={index} className="w-8 h-8 rounded-full bg-white border-2 border-green-100 flex items-center justify-center text-sm shadow-sm">{p.emoji}</div>)}
-                 {event.participants.length > 5 && <div className="w-8 h-8 rounded-full bg-gray-200 border-2 border-white flex items-center justify-center text-xs font-bold text-gray-600">+{event.participants.length - 5}</div>}
+                 {participantsList.slice(0, 5).map((p, index) => <div key={index} className="w-8 h-8 rounded-full bg-white border-2 border-green-100 flex items-center justify-center text-sm shadow-sm">{p.emoji || '👤'}</div>)}
+                 {participantsList.length > 5 && <div className="w-8 h-8 rounded-full bg-gray-200 border-2 border-white flex items-center justify-center text-xs font-bold text-gray-600">+{participantsList.length - 5}</div>}
                </div>
                <span className="text-xs font-bold text-gray-500 bg-white px-2 py-1 rounded-lg border border-gray-200 shadow-sm flex items-center gap-1">
-                 {event.participants.length} คนไป 🍻 {showMembers ? '▲' : '▼'}
+                 {participantsList.length} คนไป 🍻 {showMembers ? '▲' : '▼'}
                </span>
              </div>
              {showMembers && (
                 <div className="mt-3 pt-3 border-t border-gray-200">
-                   <p className="text-xs font-bold text-gray-500 mb-2">รายชื่อคนไปลุย ({event.participants.length})</p>
+                   <p className="text-xs font-bold text-gray-500 mb-2">รายชื่อคนไปลุย ({participantsList.length})</p>
                    <div className="flex flex-wrap gap-2">
-                      {event.participants.map(p => <span key={p.id} className="bg-white border border-gray-200 px-2 py-1.5 rounded-xl text-xs font-bold text-gray-700 shadow-sm">{p.emoji} {p.name}</span>)}
+                      {participantsList.map(p => <span key={p.id} className="bg-white border border-gray-200 px-2 py-1.5 rounded-xl text-xs font-bold text-gray-700 shadow-sm">{p.emoji || '👤'} {p.name}</span>)}
                    </div>
                 </div>
              )}
@@ -634,8 +651,19 @@
              {showCarForm && (
                 <div className="bg-blue-50 p-3 rounded-2xl mb-3 flex gap-2 items-center border border-blue-100">
                    <span className="text-xs font-bold text-blue-700">รับเพื่อนได้:</span>
+                   {/* 🛠️ ปรับตัวเลือกจำนวนที่นั่งเริ่มตั้งแต่ 0 ถึง 10 คน */}
                    <select value={newCarSeats} onChange={e => setNewCarSeats(e.target.value)} className="p-1.5 rounded-lg text-sm outline-none border border-blue-200 bg-white font-medium text-gray-700">
-                      <option value="1">1 ที่นั่ง</option><option value="2">2 ที่นั่ง</option><option value="3">3 ที่นั่ง</option><option value="4">4 ที่นั่ง</option><option value="5">5 ที่นั่ง</option>
+                      <option value="0">0 ที่นั่ง (ไปคนเดียว)</option>
+                      <option value="1">1 ที่นั่ง</option>
+                      <option value="2">2 ที่นั่ง</option>
+                      <option value="3">3 ที่นั่ง</option>
+                      <option value="4">4 ที่นั่ง</option>
+                      <option value="5">5 ที่นั่ง</option>
+                      <option value="6">6 ที่นั่ง</option>
+                      <option value="7">7 ที่นั่ง</option>
+                      <option value="8">8 ที่นั่ง</option>
+                      <option value="9">9 ที่นั่ง</option>
+                      <option value="10">10 ที่นั่ง</option>
                    </select>
                    <button onClick={handleAddCar} className="bg-blue-500 text-white text-xs px-3 py-1.5 rounded-xl font-bold ml-auto shadow-sm hover:bg-blue-600">ยืนยัน</button>
                 </div>
@@ -657,11 +685,12 @@
                          <div className="flex gap-2 mb-3 flex-wrap">
                             <div className="bg-purple-100 px-2 py-1 rounded-lg text-xs font-bold text-purple-700 flex items-center gap-1">{car.driver.emoji} คนขับ</div>
                             {car.passengers.map(p => <div key={p.id} className="bg-gray-100 border border-gray-200 px-2 py-1 rounded-lg text-xs font-bold text-gray-700 flex items-center gap-1">{p.emoji} {p.name}</div>)}
-                            {Array.from({length: emptySeats}).map((_, i) => <div key={i} className="bg-gray-50 border border-dashed border-gray-300 px-3 py-1 rounded-lg text-xs font-medium text-gray-400 flex items-center justify-center">ว่าง</div>)}
+                            {car.max_seats === 0 && <div className="bg-gray-50 border border-dashed border-gray-300 px-3 py-1 rounded-lg text-xs font-medium text-gray-400 flex items-center justify-center">ไปคนเดียวไม่รับเพิ่ม</div>}
+                            {car.max_seats > 0 && Array.from({length: emptySeats}).map((_, i) => <div key={i} className="bg-gray-50 border border-dashed border-gray-300 px-3 py-1 rounded-lg text-xs font-medium text-gray-400 flex items-center justify-center">ว่าง</div>)}
                          </div>
-                         {!isMyCar && !amInThisCar && !amIPassenger && !isFull && <button onClick={() => handleJoinCar(car.id)} className="w-full bg-blue-50 text-blue-600 py-2 rounded-xl text-xs font-bold hover:bg-blue-100 transition shadow-sm border border-blue-100">🙋 ขอติดรถไปด้วย</button>}
+                         {!isMyCar && !amInThisCar && !amIPassenger && !isFull && car.max_seats > 0 && <button onClick={() => handleJoinCar(car.id)} className="w-full bg-blue-50 text-blue-600 py-2 rounded-xl text-xs font-bold hover:bg-blue-100 transition shadow-sm border border-blue-100">🙋 ขอติดรถไปด้วย</button>}
                          {!isMyCar && amInThisCar && <button onClick={() => handleLeaveCar(car.id)} className="w-full bg-red-50 text-red-500 py-2 rounded-xl text-xs font-bold hover:bg-red-100 transition shadow-sm border border-red-100">🚪 ลงจากรถ (ยกเลิก)</button>}
-                         {isFull && !amInThisCar && !isMyCar && <div className="w-full bg-gray-100 text-gray-400 py-2 rounded-xl text-xs font-bold text-center border border-gray-200">เต็มแล้ว 😭</div>}
+                         {isFull && !amInThisCar && !isMyCar && car.max_seats > 0 && <div className="w-full bg-gray-100 text-gray-400 py-2 rounded-xl text-xs font-bold text-center border border-gray-200">เต็มแล้ว 😭</div>}
                       </div>
                    )
                 })}
@@ -686,7 +715,9 @@
          }
          Promise.all(files.map(file => new Promise((res) => { const reader = new FileReader(); reader.onload = e => res(e.target.result); reader.readAsDataURL(file); })))
          .then(base64Images => {
-            setEvents(prev => prev.map(ev => ev.id === event.id ? { ...ev, photos: [...(ev.photos || []), ...base64Images] } : ev));
+            const newPhotos = [...(event.photos || []), ...base64Images];
+            setEvents(prev => prev.map(ev => ev.id === event.id ? { ...ev, photos: newPhotos } : ev));
+            supabaseApp.from('events').update({ photos: newPhotos }).eq('id', event.id);
          });
          if(fileInputRef.current) fileInputRef.current.value = '';
       };
@@ -721,10 +752,10 @@
               )}
               <div className="space-y-2">
                 <p className="text-sm font-bold text-gray-700">ผลโหวต</p>
-                {event.options.map(opt => (
+                {event.options?.map(opt => (
                   <div key={opt.id} className="flex justify-between items-center p-3 rounded-xl border border-gray-100 bg-gray-50">
                     <span className="text-sm font-medium">{opt.date} • {opt.time} น. {event.final_option === opt.id && '✅'}</span>
-                    <span className="text-xs font-bold text-gray-500">{opt.votes.length} 🙋🏻‍♂️</span>
+                    <span className="text-xs font-bold text-gray-500">{opt.votes?.length || 0} 🙋🏻‍♂️</span>
                   </div>
                 ))}
               </div>
@@ -792,17 +823,15 @@
         };
 
         if (initialData) {
-           const { data, error } = await supabaseApp.from('events').update(eventData).eq('id', initialData.id).select();
-           if (!error) {
-              const updatedEvent = { ...data[0], created_by: currentUser };
-              setEvents(prev => prev.map(ev => ev.id === initialData.id ? updatedEvent : ev));
+           const { data, error } = await supabaseApp.from('events').update(eventData).eq('id', initialData.id).select('*, created_by:users(*)');
+           if (!error && data) {
+              setEvents(prev => prev.map(ev => ev.id === initialData.id ? data[0] : ev));
               onClose();
            }
         } else {
-           const { data, error } = await supabaseApp.from('events').insert([eventData]).select();
-           if (!error) {
-              const newEvent = { ...data[0], created_by: currentUser };
-              setEvents(prev => [newEvent, ...prev]);
+           const { data, error } = await supabaseApp.from('events').insert([eventData]).select('*, created_by:users(*)');
+           if (!error && data) {
+              setEvents(prev => [data[0], ...prev]);
               onClose();
            }
         }
