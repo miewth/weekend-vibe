@@ -495,33 +495,31 @@
            
            const participants = theOpt.votes.map(vId => { 
                const matchedUser = users.find(u => u.id === vId);
-               if (matchedUser) return matchedUser;
-               if (vId === currentUser.id) return currentUser; 
-               return { id: vId, name: currentUser.name, emoji: currentUser.emoji }; 
+               if (matchedUser) return { id: matchedUser.id, name: matchedUser.name, emoji: matchedUser.emoji };
+               if (vId === currentUser.id) return { id: currentUser.id, name: currentUser.name, emoji: currentUser.emoji }; 
+               return { id: vId, name: 'Member', emoji: '👤' }; 
            });
 
+           // บังคับแปลงประเภทข้อมูลให้เป็นรูปแบบที่ Postgres/Supabase รองรับชัวร์ๆ
            const updateData = { 
               status: 'approved', 
-              final_option: Number(optId), 
+              final_option: parseInt(optId, 10), 
               participants: participants, 
-              cars: event.cars || [] 
+              cars: Array.isArray(event.cars) ? event.cars : [] 
            };
 
-           console.log("กำลังอัปเดต Event ID:", event.id, "ด้วยข้อมูล:", updateData);
+           // แปลง event.id ให้เป็นตัวเลข Integer ป้องกันปัญหา 400 Bad Request
+           const targetId = parseInt(event.id, 10);
 
-           // 🔍 สั่งอัปเดตและขอข้อมูลที่ถูกแก้กลับมา (.select()) เพื่อเช็คว่าสำเร็จจริงไหม
            const { data, error } = await supabaseApp
               .from('events')
               .update(updateData)
-              .eq('id', Number(event.id))
+              .eq('id', targetId)
               .select();
 
-           console.log("ผลลัพธ์จาก Supabase -> data:", data, "error:", error);
-
            if (error) {
-              alert('Supabase Error: ' + error.message);
-           } else if (!data || data.length === 0) {
-              alert('⚠️ อัปเดตไม่สำเร็จ: หาแถว Event ID ' + event.id + ' ในฐานข้อมูลไม่พบ (ID อาจไม่ตรงกัน)');
+              console.error("Supabase Error 400 Detail:", error);
+              alert('บันทึกไม่สำเร็จ (Error 400): ' + error.message);
            } else {
               setEvents(prev => prev.map(e => e.id === event.id ? { ...e, ...updateData } : e));
               alert('✅ เคาะวันสำเร็จและบันทึกลง Supabase เรียบร้อย!');
