@@ -501,6 +501,7 @@
                return { id: vId, name: currentUser.name, emoji: currentUser.emoji }; 
            });
 
+           // 🛠️ ส่งเฉพาะข้อมูลดิบที่ตรงกับโครงสร้างตาราง events ใน Supabase
            const updateData = { 
               status: 'approved', 
               final_option: optId, 
@@ -508,19 +509,24 @@
               cars: event.cars || [] 
            };
 
-           // 🛠️ สั่งอัปเดตตรงไปที่ Supabase ทันทีและรอผลลัพธ์
+           // สั่งอัปเดตไปที่ Supabase
            const { data, error } = await supabaseApp
               .from('events')
               .update(updateData)
               .eq('id', event.id)
-              .select('*, created_by:users(*)');
+              .select(); // เอาแบบดึงข้อมูลกลับมาธรรมดาก่อน
 
            if (error) {
-              console.error(error);
-              alert('บันทึกการเคาะไม่สำเร็จ กรุณาลองใหม่อีกครั้ง!');
+              console.error("Supabase Error:", error);
+              alert('บันทึกการเคาะไม่สำเร็จ: ' + error.message);
            } else if (data && data.length > 0) {
-              // อัปเดต State หน้าจอด้วยข้อมูลจริงที่กลับมาจาก Supabase
-              setEvents(prev => prev.map(e => e.id === event.id ? data[0] : e));
+              // ประกอบร่างข้อมูล created_by กลับเข้าไปให้ครบถ้วนฝั่งหน้าจอแสดงผล
+              const approvedUpdatedEvent = { 
+                 ...data[0], 
+                 created_by: event.created_by // ใช้ข้อมูลผู้สร้างเดิมที่มีอยู่แล้วบนหน้าจอ
+              };
+              
+              setEvents(prev => prev.map(e => e.id === event.id ? approvedUpdatedEvent : e));
               alert('✅ เคาะวันสำเร็จ บันทึกลงฐานข้อมูลเรียบร้อย!');
            }
         }
