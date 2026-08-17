@@ -500,7 +500,6 @@
                return { id: vId, name: currentUser.name, emoji: currentUser.emoji }; 
            });
 
-           // 🛠️ ส่งเฉพาะข้อมูลคอลัมน์พื้นฐาน (ไม่พ่วงอ็อบเจ็กต์ซับซ้อน) เพื่อป้องกัน Supabase บล็อก
            const updateData = { 
               status: 'approved', 
               final_option: Number(optId), 
@@ -508,19 +507,24 @@
               cars: event.cars || [] 
            };
 
-           // 🚀 สั่งอัปเดตระบุ ID ให้ชัดเจน และเช็ค Error ตรงๆ
-           const { error } = await supabaseApp
+           console.log("กำลังอัปเดต Event ID:", event.id, "ด้วยข้อมูล:", updateData);
+
+           // 🔍 สั่งอัปเดตและขอข้อมูลที่ถูกแก้กลับมา (.select()) เพื่อเช็คว่าสำเร็จจริงไหม
+           const { data, error } = await supabaseApp
               .from('events')
               .update(updateData)
-              .eq('id', Number(event.id));
+              .eq('id', Number(event.id))
+              .select();
+
+           console.log("ผลลัพธ์จาก Supabase -> data:", data, "error:", error);
 
            if (error) {
-              console.error("Supabase Update Failed:", error);
-              alert('บันทึกไม่สำเร็จ: ' + error.message);
+              alert('Supabase Error: ' + error.message);
+           } else if (!data || data.length === 0) {
+              alert('⚠️ อัปเดตไม่สำเร็จ: หาแถว Event ID ' + event.id + ' ในฐานข้อมูลไม่พบ (ID อาจไม่ตรงกัน)');
            } else {
-              // อัปเดตหน้าจอเมื่อสำเร็จจริงเท่านั้น
               setEvents(prev => prev.map(e => e.id === event.id ? { ...e, ...updateData } : e));
-              alert('✅ เคาะวันสำเร็จ บันทึกลงฐานข้อมูลเรียบร้อย!');
+              alert('✅ เคาะวันสำเร็จและบันทึกลง Supabase เรียบร้อย!');
            }
         }
       };
